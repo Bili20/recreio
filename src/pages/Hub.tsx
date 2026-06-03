@@ -23,8 +23,6 @@ export default function Hub() {
         <p>Joguinhos leves para qualquer momento livre — sem cadastro, sem anúncios, só o jogo. Seus recordes ficam salvos a cada partida.</p>
         <div className="stat-line">
           <span><b>6</b> jogos</span>
-          <span><b>0</b> downloads — roda no navegador</span>
-          <span><b>2</b> temas · 4 cores de destaque</span>
         </div>
       </section>
 
