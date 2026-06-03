@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { submitRecord, loadRecords, RECORD_DEFS } from './records'
+import { submitRecord, incrementPlays, loadRecords, hasRecord, RECORD_DEFS } from './records'
 
 describe('records', () => {
   beforeEach(() => localStorage.clear())
@@ -8,6 +8,22 @@ describe('records', () => {
     const recs = submitRecord('velha', 3)
     expect(recs.velha?.value).toBe(3)
     expect(recs.velha?.updatedAt).toBeTypeOf('number')
+  })
+
+  it('grava o recorde mesmo após uma derrota/empate prévia (sentinela sem recorde)', () => {
+    incrementPlays('velha') // derrota: registra partida, ainda sem recorde
+    expect(hasRecord(loadRecords().velha)).toBe(false)
+    const recs = submitRecord('velha', 2) // primeira vitória
+    expect(recs.velha?.value).toBe(2)
+    expect(recs.velha?.plays).toBe(2)
+    expect(hasRecord(recs.velha)).toBe(true)
+  })
+
+  it('sentinela "sem recorde" sobrevive ao ciclo JSON do localStorage', () => {
+    incrementPlays('memoria')
+    const recarregado = loadRecords() // relê via JSON.parse
+    expect(hasRecord(recarregado.memoria)).toBe(false)
+    expect(recarregado.memoria?.plays).toBe(1)
   })
 
   it('só substitui quando o novo resultado é melhor (maior é melhor na velha)', () => {

@@ -6,7 +6,7 @@ import Chip from '../components/Chip'
 import { GAMES } from '../games/games'
 import type { GameId } from '../games/games'
 import { useRecords } from '../hooks/useRecords'
-import { RECORD_DEFS } from '../utils/records'
+import { RECORD_DEFS, hasRecord } from '../utils/records'
 
 // "há 2 dias", "ontem", "hoje" a partir do timestamp.
 function tempoRelativo(ts: number): string {
@@ -22,24 +22,21 @@ export default function Placar() {
 
   // Monta as linhas a partir dos jogos que têm recorde de verdade.
   const linhas: ScoreRow[] = useMemo(() => {
-    return GAMES.filter((g) => {
-      const r = records[g.id]
-      return r && !Number.isNaN(r.value)
-    })
+    return GAMES.filter((g) => hasRecord(records[g.id]))
       .filter((g) => filtro === 'todos' || g.id === filtro)
       .map((g) => {
         const r = records[g.id]!
         return {
           id: g.id,
           nome: g.nome,
-          valor: RECORD_DEFS[g.id].format(r.value),
+          valor: RECORD_DEFS[g.id].format(r.value as number),
           metrica: RECORD_DEFS[g.id].metricaCurta,
           atualizado: tempoRelativo(r.updatedAt),
         }
       })
   }, [records, filtro])
 
-  const comRecorde = Object.values(records).filter((r) => r && !Number.isNaN(r.value)).length
+  const comRecorde = Object.values(records).filter((r) => hasRecord(r)).length
   const partidas = Object.values(records).reduce((s, r) => s + (r?.plays ?? 0), 0)
 
   return (

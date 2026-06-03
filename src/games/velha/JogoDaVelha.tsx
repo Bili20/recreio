@@ -5,6 +5,7 @@ import Button from '../../components/Button'
 import Chip from '../../components/Chip'
 import Pill from '../../components/Pill'
 import { useRecords } from '../../hooks/useRecords'
+import { hasRecord } from '../../utils/records'
 import {
   vencedor, tabuleiroCheio, escolherJogada,
   type Tabuleiro, type Nivel, type Marca,
@@ -52,8 +53,9 @@ export default function JogoDaVelha() {
       if (i >= 0) aplicar(i)
     }, 380)
     return () => clearTimeout(tempo)
+    // `tab`/`aplicar` omitidos de propósito; `nivel` incluído p/ refletir troca de dificuldade.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vez, modo, acabou])
+  }, [vez, modo, acabou, nivel])
 
   // Ao terminar a rodada: atualiza placar, sequência e recorde (uma vez só).
   useEffect(() => {
@@ -105,7 +107,7 @@ export default function JogoDaVelha() {
       ? vez === 'X' ? 'Sua vez' : 'Vez da CPU…'
       : `Vez do ${vez}`
 
-  const recorde = records.velha && !Number.isNaN(records.velha.value) ? records.velha.value : 0
+  const recorde = hasRecord(records.velha) ? (records.velha!.value as number) : '—'
   const linhaWin: number[] = resultado?.linha ?? []
 
   return (
