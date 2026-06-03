@@ -375,3 +375,23 @@ a { color: inherit; text-decoration: none; }
 .rps-choice:disabled { opacity: 0.55; cursor: default; }
 .rps-choice.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-strong); }
 .rps-choice svg { width: 26px; height: 26px; }
+
+/* ============ Jogo da Memória ============ */
+.mem-tempo { font-family: var(--font-display); font-weight: 700; font-size: var(--t-h1); line-height: 1.1; }
+
+.mem-grid { display: grid; gap: 10px; width: min(480px, 92%); }
+.mem-card {
+  aspect-ratio: 1; border-radius: var(--radius-DEFAULT); border: 1px solid var(--border);
+  display: grid; place-items: center; cursor: pointer; padding: 0;
+  background: var(--accent); color: var(--accent);
+  transition: background .18s ease, border-color .18s ease, transform .1s ease;
+}
+.mem-card.down::after {
+  content: ""; width: 26%; aspect-ratio: 1; border-radius: 4px;
+  background: color-mix(in oklab, var(--accent-fg) 28%, transparent);
+}
+.mem-card.down:hover { transform: translateY(-2px); }
+.mem-card.up, .mem-card.matched { background: var(--accent-soft); color: var(--accent); cursor: default; }
+.mem-card.matched { border-color: var(--accent); }
+.mem-card svg { width: 52%; height: 52%; }
+.mem-card:disabled { cursor: default; }
