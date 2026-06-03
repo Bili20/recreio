@@ -14,7 +14,7 @@ export const GAMES: GameMeta[] = [
     descricao: 'Clássico X e O. Alinhe três e leve a melhor contra a máquina.' },
   { id: 'jokenpo', nome: 'Pedra, Papel, Tesoura', rota: '/jokenpo', iconKey: 'jokenpo', ativo: true,
     descricao: 'Melhor de cinco contra o computador. Pura sorte e instinto.' },
-  { id: 'memoria', nome: 'Jogo da Memória', rota: '/memoria', iconKey: 'memoria', ativo: false,
+  { id: 'memoria', nome: 'Jogo da Memória', rota: '/memoria', iconKey: 'memoria', ativo: true,
     descricao: 'Encontre todos os pares no menor tempo e menos tentativas.' },
   { id: 'g2048', nome: '2048', rota: '/2048', iconKey: 'g2048', ativo: false,
     descricao: 'Junte blocos iguais para chegar a 2048.' },

@@ -28,7 +28,8 @@ npm run test     # testes (lógica dos jogos, recordes, storage)
   - *Médio* — defensivo (vence se pode, senão bloqueia, senão joga por prioridade posicional).
   - *Difícil* — **minimax** completo; é imbatível (o melhor que dá é empatar).
 - **Pedra, Papel, Tesoura** — melhor de cinco (primeiro a 3) contra o computador, com placar e recorde de séries seguidas.
-- _Em breve (Fase 2):_ Memória, 2048, Forca, Sudoku.
+- **Jogo da Memória** — grade 4×4 ou 6×6, contagem de movimentos, cronômetro e recorde de melhor tempo.
+- _Em breve (Fase 2):_ 2048, Forca, Sudoku.
 
 ## Recursos
 
