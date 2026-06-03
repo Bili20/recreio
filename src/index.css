@@ -188,3 +188,91 @@ a { color: inherit; text-decoration: none; }
 .site-footer .wrap { display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: center; padding-block: 28px; color: var(--muted); font-size: var(--t-sm); }
 .site-footer nav { display: flex; gap: 20px; }
 .site-footer a:hover { color: var(--accent); }
+
+/* ============ Botões / pills / chips ============ */
+.btn {
+  --pad-y: 11px; --pad-x: 20px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: var(--font-display); font-weight: 600; font-size: var(--t-sm);
+  padding: var(--pad-y) var(--pad-x); border-radius: var(--radius-pill);
+  border: 1px solid transparent; cursor: pointer;
+  transition: background .18s ease, border-color .18s ease, box-shadow .18s ease, transform .12s ease;
+}
+.btn:active { transform: translateY(1px) scale(0.985); }
+.btn-sm { --pad-y: 7px; --pad-x: 14px; font-size: var(--t-xs); }
+.btn-primary { background: var(--accent); color: var(--accent-fg); box-shadow: var(--shadow-sm); }
+.btn-primary:hover { background: var(--accent-strong); box-shadow: var(--shadow); }
+.btn-ghost { background: var(--surface); border-color: var(--border); color: var(--text); }
+.btn-ghost:hover { border-color: var(--border-strong); }
+.btn-soft { background: var(--accent-soft); color: var(--accent-strong); }
+.btn-soft:hover { background: color-mix(in oklch, var(--accent) 20%, var(--surface)); }
+
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: var(--radius-pill); font-family: var(--font-display); font-weight: 600; font-size: var(--t-xs); }
+.pill-accent { background: var(--accent-soft); color: var(--accent-strong); }
+.pill-muted { background: var(--surface-2); border: 1px solid var(--border); color: var(--muted); }
+
+.chip {
+  font-family: var(--font-display); font-weight: 600; font-size: var(--t-sm);
+  padding: 8px 16px; border-radius: var(--radius-pill);
+  background: var(--surface); border: 1px solid var(--border); color: var(--text); cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+.chip:hover { border-color: var(--border-strong); }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+
+/* ============ Painéis ============ */
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 22px; box-shadow: var(--shadow-sm); }
+.panel h4 { font-size: var(--t-xs); text-transform: uppercase; letter-spacing: 0.12em; color: var(--faint); margin-bottom: 14px; }
+.stat-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; }
+.stat-row + .stat-row { border-top: 1px solid var(--border); }
+.stat-row .k { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); }
+.stat-row .v { font-family: var(--font-display); font-weight: 700; font-size: 1.4rem; }
+.stat-big { display: flex; flex-direction: column; gap: 2px; }
+.stat-big small { color: var(--faint); font-size: var(--t-xs); text-transform: uppercase; letter-spacing: 0.1em; }
+.stat-big b { font-family: var(--font-display); font-weight: 700; font-size: var(--t-h1); }
+.panel-actions { display: flex; flex-direction: column; gap: 10px; }
+.panel-actions .btn { width: 100%; }
+.divider { height: 1px; background: var(--border); margin: 16px 0; border: 0; }
+
+/* ============ Área de tabuleiro ============ */
+.board-area { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: clamp(20px, 3vw, 38px); min-height: 420px; display: flex; flex-direction: column; align-items: center; gap: 20px; box-shadow: var(--shadow-sm); }
+.board-status { display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 600; font-size: var(--t-h3); }
+.board-status .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+
+/* ============ Card de jogo ============ */
+.game-card { display: flex; flex-direction: column; gap: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 22px; box-shadow: var(--shadow-sm); position: relative; transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+.game-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); border-color: var(--accent); }
+.game-card .game-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.game-thumb { width: 56px; height: 56px; border-radius: var(--radius-DEFAULT); display: grid; place-items: center; background: var(--accent-soft); color: var(--accent-strong); }
+.game-arrow { color: var(--faint); transition: transform .2s ease, color .2s ease; }
+.game-card:hover .game-arrow { color: var(--accent); transform: translate(2px, -2px); }
+.game-card h3 { font-size: var(--t-h3); }
+.game-card .desc { color: var(--muted); font-size: var(--t-sm); }
+.record { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; border-top: 1px solid var(--border); padding-top: 12px; margin-top: auto; }
+.record .label { font-size: var(--t-xs); text-transform: uppercase; letter-spacing: 0.12em; color: var(--faint); }
+.record .value { font-family: var(--font-display); font-weight: 700; }
+.record.empty .value { color: var(--faint); font-weight: 400; }
+.game-card.coming { opacity: 0.6; pointer-events: none; }
+
+/* ============ Resumo / tabela do placar ============ */
+.summary-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-sm); }
+.summary-card b { display: block; font-family: var(--font-display); font-weight: 700; font-size: var(--t-h1); }
+.summary-card span { color: var(--muted); }
+
+.score-table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+.score-table th { text-align: left; font-size: var(--t-xs); text-transform: uppercase; letter-spacing: 0.1em; color: var(--faint); background: var(--surface-2); padding: 14px 18px; font-weight: 600; }
+.score-table td { padding: 16px 18px; border-top: 1px solid var(--border); }
+.score-table tbody tr:hover { background: var(--accent-tint); }
+.score-game { display: inline-flex; align-items: center; gap: 12px; }
+.score-mini { width: 36px; height: 36px; border-radius: var(--radius-sm); display: grid; place-items: center; background: var(--accent-soft); color: var(--accent-strong); }
+.score-value { font-family: var(--font-display); font-weight: 700; }
+.score-rank { color: var(--faint); font-family: var(--font-display); }
+.text-right { text-align: right; }
+
+/* ============ Campos ============ */
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-family: var(--font-display); color: var(--muted); font-size: var(--t-sm); }
+.field > span { font-family: var(--font-display); color: var(--muted); font-size: var(--t-sm); }
+.input { border-radius: var(--radius-sm); border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); padding: 10px 12px; font: inherit; }
+.input::placeholder { color: var(--faint); }
+.input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
