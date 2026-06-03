@@ -12,7 +12,7 @@ export interface GameMeta {
 export const GAMES: GameMeta[] = [
   { id: 'velha', nome: 'Jogo da Velha', rota: '/velha', iconKey: 'velha', ativo: true,
     descricao: 'Clássico X e O. Alinhe três e leve a melhor contra a máquina.' },
-  { id: 'jokenpo', nome: 'Pedra, Papel, Tesoura', rota: '/jokenpo', iconKey: 'jokenpo', ativo: false,
+  { id: 'jokenpo', nome: 'Pedra, Papel, Tesoura', rota: '/jokenpo', iconKey: 'jokenpo', ativo: true,
     descricao: 'Melhor de cinco contra o computador. Pura sorte e instinto.' },
   { id: 'memoria', nome: 'Jogo da Memória', rota: '/memoria', iconKey: 'memoria', ativo: false,
     descricao: 'Encontre todos os pares no menor tempo e menos tentativas.' },

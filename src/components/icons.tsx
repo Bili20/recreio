@@ -34,3 +34,13 @@ const GAME_ICONS: Record<GameId, JSX.Element> = {
 export const GameIcon = ({ id, ...p }: { id: GameId } & IconProps) => (
   <svg {...base(p)}>{GAME_ICONS[id]}</svg>
 )
+
+export const IconPedra = (p: IconProps) => (
+  <svg {...base(p)}><circle cx="12" cy="12" r="7" /></svg>
+)
+export const IconPapel = (p: IconProps) => (
+  <svg {...base(p)}><rect x="5" y="5" width="14" height="14" rx="3" /></svg>
+)
+export const IconTesoura = (p: IconProps) => (
+  <svg {...base(p)}><path d="M6 6l12 12M18 6 6 18" /></svg>
+)
