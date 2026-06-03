@@ -1,3 +1,6 @@
+import Layout from './components/Layout'
+import Hub from './pages/Hub'
+
 export default function App() {
-  return <div className="wrap">Recreio</div>
+  return <Layout><Hub /></Layout>
 }

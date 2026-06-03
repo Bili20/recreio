@@ -276,3 +276,17 @@ a { color: inherit; text-decoration: none; }
 .input { border-radius: var(--radius-sm); border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); padding: 10px 12px; font: inherit; }
 .input::placeholder { color: var(--faint); }
 .input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+/* ============ Hub ============ */
+.hero { padding-block: clamp(40px, 8vw, 80px) 8px; }
+.hero h1 { font-size: var(--t-hero); text-wrap: balance; max-width: 16ch; }
+.hero p { color: var(--muted); font-size: var(--t-h3); max-width: 52ch; margin-top: 16px; }
+.stat-line { display: flex; flex-wrap: wrap; gap: 8px 28px; margin-top: 24px; color: var(--muted); font-size: var(--t-sm); }
+.stat-line b { color: var(--text); font-family: var(--font-display); }
+.section-head { display: flex; justify-content: space-between; align-items: baseline; margin: 40px 0 20px; gap: 16px; }
+.section-head h2 { font-size: var(--t-h2); }
+.section-head span { color: var(--faint); font-size: var(--t-sm); }
+.games-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--gap); }
+.summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--gap); }
+@media (max-width: 1024px) { .games-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .games-grid, .summary-grid { grid-template-columns: 1fr; } }
