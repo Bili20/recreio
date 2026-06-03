@@ -324,3 +324,10 @@ a { color: inherit; text-decoration: none; }
 .ttt-cell.o { color: var(--muted); }
 .ttt-cell.win { background: var(--accent-soft); border-color: var(--accent); }
 .ttt-mark { width: 46%; height: 46%; }
+
+/* ============ Placar ============ */
+.placar-head { margin-bottom: 20px; }
+.placar-head h1 { font-size: var(--t-h1); }
+.placar-head p { color: var(--muted); margin-top: 8px; }
+.filtros { display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0; }
+.summary-grid { margin-bottom: 24px; }
