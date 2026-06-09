@@ -1,18 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
-import type { TouchEvent as ReactTouchEvent } from 'react'
+import type { TouchEvent as ReactTouchEvent, CSSProperties } from 'react'
 import Panel, { StatRow, Divider } from '../../components/Panel'
 import BoardArea from '../../components/BoardArea'
 import Button from '../../components/Button'
 import { useRecords } from '../../hooks/useRecords'
 import { hasRecord, RECORD_DEFS } from '../../utils/records'
+import { gridInicial, temMovimento, venceu, type Direcao } from './logic'
 import {
-  mover, adicionarAleatorio, gridInicial, temMovimento, venceu,
-  type Direcao, type Grade,
-} from './logic'
+  blocosDeGrade, gradeDeBlocos, moverBlocos, adicionarBloco, type Bloco,
+} from './blocos'
 
-// Cor do bloco: intensidade do acento cresce com log2(valor); texto contrasta nos blocos intensos.
-function estiloTile(v: number) {
-  if (v === 0) return undefined
+const DURACAO = 140 // ms do deslize; combina com a transição em .tile
+
+// Cor do bloco: intensidade do acento cresce com log2(valor); texto contrasta nos intensos.
+function estiloTile(v: number): CSSProperties {
   const pct = Math.min(100, 16 + Math.log2(v) * 8) // 2≈24% … 2048≈100%
   return {
     background: `color-mix(in oklab, var(--accent) ${pct}%, var(--surface))`,
@@ -22,25 +23,36 @@ function estiloTile(v: number) {
 
 export default function Jogo2048() {
   const { records, submit } = useRecords()
-  const [grade, setGrade] = useState<Grade>(() => gridInicial())
+  const [blocos, setBlocos] = useState<Bloco[]>(() => blocosDeGrade(gridInicial()))
   const [pontos, setPontos] = useState(0)
   const [jogadas, setJogadas] = useState(0)
+  const [animando, setAnimando] = useState(false)
   const [registrado, setRegistrado] = useState(false)
 
+  const grade = gradeDeBlocos(blocos)
   const ganhou = venceu(grade)
-  const fim = !temMovimento(grade)
-  const maiorBloco = Math.max(...grade.flat())
+  const fim = !animando && !temMovimento(grade)
+  const maiorBloco = Math.max(0, ...grade.flat())
 
   function aplicar(dir: Direcao) {
-    if (fim) return
-    const r = mover(grade, dir)
+    if (animando || fim) return
+    const r = moverBlocos(blocos, dir)
     if (!r.mudou) return
-    setGrade(adicionarAleatorio(r.grid))
+    setAnimando(true)
+    setBlocos(r.blocos) // desliza e funde (os removidos deslizam sobre os sobreviventes)
     setPontos((p) => p + r.ganho)
     setJogadas((j) => j + 1)
+    // após o deslize: limpa flags, remove os absorvidos e faz surgir um novo bloco
+    window.setTimeout(() => {
+      const limpos = r.blocos
+        .filter((b) => !b.removido)
+        .map((b) => ({ ...b, novo: false, fundido: false }))
+      setBlocos(adicionarBloco(limpos))
+      setAnimando(false)
+    }, DURACAO)
   }
 
-  // Teclado (setas). Re-vincula quando a grade muda p/ usar o estado atual.
+  // Teclado (setas). Re-vincula quando o estado muda p/ ler o atual.
   useEffect(() => {
     const mapa: Record<string, Direcao> = {
       ArrowLeft: 'esquerda', ArrowRight: 'direita', ArrowUp: 'cima', ArrowDown: 'baixo',
@@ -54,7 +66,7 @@ export default function Jogo2048() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [grade, fim])
+  }, [blocos, animando, fim])
 
   // Swipe (touch).
   const toque = useRef<{ x: number; y: number } | null>(null)
@@ -73,7 +85,7 @@ export default function Jogo2048() {
     else aplicar(dy > 0 ? 'baixo' : 'cima')
   }
 
-  // Grava o recorde uma vez por jogo: ao fim de jogo (pontuação é monotônica → final = máximo).
+  // Grava o recorde uma vez por jogo (pontuação monotônica → final = máximo).
   useEffect(() => {
     if (fim && !registrado && pontos > 0) {
       submit('g2048', pontos)
@@ -84,16 +96,14 @@ export default function Jogo2048() {
 
   function novoJogo() {
     if (!registrado && pontos > 0) submit('g2048', pontos) // registra jogo abandonado
-    setGrade(gridInicial())
+    setBlocos(blocosDeGrade(gridInicial()))
     setPontos(0)
     setJogadas(0)
+    setAnimando(false)
     setRegistrado(false)
   }
 
-  const status = fim
-    ? 'Fim de jogo — sem movimentos'
-    : ganhou ? 'Você chegou a 2048! 🎉'
-    : 'Junte blocos iguais para chegar a 2048'
+  const status = ganhou ? 'Você chegou a 2048! 🎉' : 'Junte blocos iguais para chegar a 2048'
   const recorde = hasRecord(records.g2048) ? RECORD_DEFS.g2048.format(records.g2048!.value as number) : '—'
 
   return (
@@ -116,11 +126,29 @@ export default function Jogo2048() {
 
       <BoardArea status={status}>
         <div className="g2048" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} role="grid" aria-label="Tabuleiro do 2048">
-          {grade.flat().map((v, i) => (
-            <div key={i} className={`tile${v === 0 ? ' empty' : ''}`} style={estiloTile(v)}>
-              {v !== 0 ? v : ''}
+          {/* casas de fundo (estáticas) */}
+          {Array.from({ length: 16 }).map((_, i) => (
+            <span key={i} className="g2048-cell" style={{ '--r': Math.floor(i / 4), '--c': i % 4 } as CSSProperties} />
+          ))}
+          {/* blocos (posicionados e animados) */}
+          {blocos.map((b) => (
+            <div
+              key={b.id}
+              className={`tile${b.novo ? ' novo' : ''}${b.fundido ? ' fundido' : ''}${b.removido ? ' removido' : ''}`}
+              style={{ '--r': b.r, '--c': b.c, ...estiloTile(b.valor) } as CSSProperties}
+            >
+              {b.valor}
             </div>
           ))}
+          {fim && (
+            <div className="g2048-overlay">
+              <div className="g2048-overlay-card">
+                <strong>Fim de jogo</strong>
+                <span>{pontos.toLocaleString('pt-BR')} pontos</span>
+                <Button variant="primary" onClick={novoJogo}>Novo jogo</Button>
+              </div>
+            </div>
+          )}
         </div>
       </BoardArea>
     </div>

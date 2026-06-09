@@ -398,19 +398,43 @@ a { color: inherit; text-decoration: none; }
 
 /* ============ 2048 ============ */
 .g2048-score { font-family: var(--font-display); font-weight: 700; font-size: var(--t-h1); line-height: 1.1; }
+/* Container posicionado: casas de fundo e blocos são absolutos, posicionados por --r/--c.
+   Cada passo entre casas = 24.5% da largura; bloco ocupa 22.5% (gap ~2%). */
 .g2048 {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
-  width: min(440px, 92%); aspect-ratio: 1; padding: 10px;
+  position: relative; width: min(440px, 92%); aspect-ratio: 1;
   background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-lg);
   touch-action: none; user-select: none;
 }
+.g2048-cell, .tile {
+  position: absolute; width: 22.5%; height: 22.5%;
+  left: calc(var(--c) * 24.5% + 2%); top: calc(var(--r) * 24.5% + 2%);
+  border-radius: var(--radius); display: grid; place-items: center;
+}
+.g2048-cell { background: color-mix(in oklab, var(--surface) 60%, transparent); }
 .tile {
-  display: grid; place-items: center; border-radius: var(--radius);
   font-family: var(--font-display); font-weight: 700; font-size: clamp(1rem, 4.5vw, 1.7rem);
   background: var(--accent-soft); color: var(--text);
-  transition: background .12s ease;
+  transition: left .14s ease, top .14s ease;
 }
-.tile.empty { background: color-mix(in oklab, var(--surface) 65%, transparent); }
+.tile.removido { z-index: 0; }
+.tile.novo { animation: g2048-surge .16s ease; }
+.tile.fundido { animation: g2048-pop .16s ease; }
+@keyframes g2048-surge { from { transform: scale(0.1); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes g2048-pop { 0% { transform: scale(1); } 50% { transform: scale(1.16); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .tile { transition: none; }
+  .tile.novo, .tile.fundido { animation: none; }
+}
+/* Game over explícito sobre o tabuleiro */
+.g2048-overlay {
+  position: absolute; inset: 0; z-index: 5; display: grid; place-items: center;
+  background: color-mix(in oklab, var(--bg) 62%, transparent); backdrop-filter: blur(2px);
+  border-radius: var(--radius-lg); animation: g2048-fade .2s ease;
+}
+.g2048-overlay-card { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+.g2048-overlay-card strong { font-family: var(--font-display); font-size: var(--t-h2); }
+.g2048-overlay-card span { color: var(--muted); }
+@keyframes g2048-fade { from { opacity: 0; } to { opacity: 1; } }
 
 /* ============ Jogo da Forca ============ */
 .hm-apro { font-family: var(--font-display); font-weight: 700; font-size: var(--t-h1); line-height: 1.1; }
