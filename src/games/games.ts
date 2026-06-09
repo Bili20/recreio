@@ -20,7 +20,7 @@ export const GAMES: GameMeta[] = [
     descricao: 'Junte blocos iguais para chegar a 2048.' },
   { id: 'forca', nome: 'Jogo da Forca', rota: '/forca', iconKey: 'forca', ativo: true,
     descricao: 'Adivinhe a palavra antes que o boneco complete.' },
-  { id: 'sudoku', nome: 'Sudoku', rota: '/sudoku', iconKey: 'sudoku', ativo: false,
+  { id: 'sudoku', nome: 'Sudoku', rota: '/sudoku', iconKey: 'sudoku', ativo: true,
     descricao: 'Preencha o tabuleiro 9×9 em três níveis de dificuldade.' },
 ]
 

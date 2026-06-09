@@ -7,6 +7,7 @@ import Jokenpo from './games/jokenpo/Jokenpo'
 import Memoria from './games/memoria/Memoria'
 import Jogo2048 from './games/g2048/Jogo2048'
 import Forca from './games/forca/Forca'
+import Sudoku from './games/sudoku/Sudoku'
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
         <Route path="/memoria" element={<Memoria />} />
         <Route path="/2048" element={<Jogo2048 />} />
         <Route path="/forca" element={<Forca />} />
+        <Route path="/sudoku" element={<Sudoku />} />
       </Routes>
     </Layout>
   )

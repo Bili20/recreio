@@ -1,0 +1,150 @@
+import { useEffect, useState } from 'react'
+import Panel, { StatRow, Divider } from '../../components/Panel'
+import BoardArea from '../../components/BoardArea'
+import Chip from '../../components/Chip'
+import Button from '../../components/Button'
+import { useRecords } from '../../hooks/useRecords'
+import { hasRecord, RECORD_DEFS } from '../../utils/records'
+import { gerar, completo, type Grade, type Dificuldade } from './logic'
+
+const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+const ROTULO: Record<Dificuldade, string> = { facil: 'Fácil', medio: 'Médio', dificil: 'Difícil' }
+const clonar = (g: Grade): Grade => g.map((l) => [...l])
+
+export default function Sudoku() {
+  const { records, submit } = useRecords()
+  const [dif, setDif] = useState<Dificuldade>('facil')
+  const [jogo, setJogo] = useState(() => gerar('facil'))
+  const [grade, setGrade] = useState<Grade>(() => clonar(jogo.puzzle))
+  const [sel, setSel] = useState<[number, number] | null>(null)
+  const [erros, setErros] = useState(0)
+  const [errada, setErrada] = useState<[number, number] | null>(null)
+  const [inicio, setInicio] = useState<number>(() => Date.now())
+  const [agora, setAgora] = useState(0)
+  const [registrado, setRegistrado] = useState(false)
+
+  const venceu = completo(grade)
+  const fim = venceu || erros >= 3
+  const preenchidas = grade.flat().filter((v) => v !== 0).length
+  const pct = Math.round((preenchidas / 81) * 100)
+
+  useEffect(() => {
+    if (fim) return
+    const id = setInterval(() => setAgora(Math.floor((Date.now() - inicio) / 1000)), 250)
+    return () => clearInterval(id)
+  }, [inicio, fim])
+
+  useEffect(() => {
+    if (!venceu || registrado) return
+    const seg = Math.max(1, Math.round((Date.now() - inicio) / 1000))
+    setAgora(seg)
+    setRegistrado(true)
+    submit('sudoku', seg)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [venceu])
+
+  function novoJogo(d: Dificuldade = dif) {
+    const j = gerar(d)
+    setDif(d); setJogo(j); setGrade(clonar(j.puzzle))
+    setSel(null); setErros(0); setErrada(null)
+    setInicio(Date.now()); setAgora(0); setRegistrado(false)
+  }
+
+  function digitar(v: number) {
+    if (fim || !sel) return
+    const [r, c] = sel
+    if (jogo.puzzle[r][c] !== 0) return // célula fixa
+    if (v === 0) {
+      setGrade((g) => { const n = clonar(g); n[r][c] = 0; return n }); setErrada(null); return
+    }
+    if (v === jogo.solucao[r][c]) {
+      setGrade((g) => { const n = clonar(g); n[r][c] = v; return n }); setErrada(null)
+    } else {
+      setErros((e) => e + 1); setErrada([r, c])
+    }
+  }
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key >= '1' && e.key <= '9') digitar(Number(e.key))
+      else if (e.key === 'Backspace' || e.key === 'Delete' || e.key === '0') digitar(0)
+      else if (sel) {
+        const [r, c] = sel
+        if (e.key === 'ArrowUp' && r > 0) setSel([r - 1, c])
+        else if (e.key === 'ArrowDown' && r < 8) setSel([r + 1, c])
+        else if (e.key === 'ArrowLeft' && c > 0) setSel([r, c - 1])
+        else if (e.key === 'ArrowRight' && c < 8) setSel([r, c + 1])
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sel, grade, fim])
+
+  const ehPeer = (r: number, c: number) => {
+    if (!sel) return false
+    const [sr, sc] = sel
+    return r === sr || c === sc || (Math.floor(r / 3) === Math.floor(sr / 3) && Math.floor(c / 3) === Math.floor(sc / 3))
+  }
+
+  const status = venceu
+    ? `Resolvido em ${fmt(agora)}! 🎉`
+    : erros >= 3 ? 'Fim de jogo — 3 erros'
+    : sel ? 'Selecione um número para a célula destacada'
+    : 'Toque numa célula para começar'
+  const recorde = hasRecord(records.sudoku) ? RECORD_DEFS.sudoku.format(records.sudoku!.value as number) : '—'
+
+  return (
+    <div className="game-layout cols-2">
+      <div className="panel-side-left">
+        <Panel title="Tempo">
+          <div className="su-tempo">{fmt(agora)}</div>
+          <Divider />
+          <StatRow k="Dificuldade" v={ROTULO[dif]} />
+          <StatRow k="Preenchido" v={`${pct}%`} />
+          <StatRow k="Erros" v={`${erros} / 3`} />
+          <StatRow k="Recorde" v={recorde} />
+        </Panel>
+        <Panel title="Níveis">
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <Chip active={dif === 'facil'} onClick={() => novoJogo('facil')}>Fácil</Chip>
+            <Chip active={dif === 'medio'} onClick={() => novoJogo('medio')}>Médio</Chip>
+            <Chip active={dif === 'dificil'} onClick={() => novoJogo('dificil')}>Difícil</Chip>
+          </div>
+        </Panel>
+      </div>
+
+      <BoardArea status={status}>
+        <div className="su-board" role="grid" aria-label="Tabuleiro de Sudoku">
+          {grade.map((linha, r) =>
+            linha.map((v, c) => {
+              const fixo = jogo.puzzle[r][c] !== 0
+              const selecionada = sel?.[0] === r && sel?.[1] === c
+              const eErrada = errada?.[0] === r && errada?.[1] === c
+              const cls = [
+                'su-cell',
+                (c === 2 || c === 5) ? 'box-r' : '',
+                (r === 2 || r === 5) ? 'box-b' : '',
+                fixo ? 'fixo' : v !== 0 ? 'user' : '',
+                selecionada ? 'sel' : ehPeer(r, c) ? 'peer' : '',
+                eErrada ? 'erro' : '',
+              ].filter(Boolean).join(' ')
+              return (
+                <div key={`${r}-${c}`} className={cls} onClick={() => setSel([r, c])}>
+                  {v !== 0 ? v : ''}
+                </div>
+              )
+            }),
+          )}
+        </div>
+        <div className="su-pad">
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+            <button key={n} className="su-key" onClick={() => digitar(n)} disabled={fim}>{n}</button>
+          ))}
+          <button className="su-key" onClick={() => digitar(0)} disabled={fim} aria-label="Apagar">⌫</button>
+        </div>
+        {fim && <Button variant="primary" onClick={() => novoJogo()}>Novo jogo</Button>}
+      </BoardArea>
+    </div>
+  )
+}

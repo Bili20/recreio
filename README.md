@@ -2,7 +2,7 @@
 
 Portal web de jogos casuais clássicos — **React + Vite + Tailwind CSS v4**. Sem cadastro, sem backend: tudo roda no navegador e os recordes ficam salvos no `localStorage`.
 
-> **Status:** Fase 2 em andamento — fundação completa + **Jogo da Velha**, **Pedra-Papel-Tesoura**, **Jogo da Memória**, **2048** e **Jogo da Forca** implementados. Sudoku aparece no hub como *Em breve* e será implementado em seguida, reaproveitando toda esta base.
+> **Status:** Fase 2 concluída — todos os seis jogos implementados.
 
 ## Como rodar
 
@@ -31,7 +31,7 @@ npm run test     # testes (lógica dos jogos, recordes, storage)
 - **Jogo da Memória** — grade 4×4 ou 6×6, contagem de movimentos, cronômetro e recorde de melhor tempo.
 - **2048** — junte blocos iguais até 2048; setas no desktop, swipe no celular; recorde de maior pontuação.
 - **Jogo da Forca** — 60 palavras em 5 categorias, boneco progressivo, dica, teclado na tela e físico; recorde de aproveitamento.
-- _Em breve (Fase 2):_ Sudoku.
+- **Sudoku** — geração automática em três níveis, validação de jogadas (3 erros), cronômetro e recorde de melhor tempo.
 
 ## Recursos
 
