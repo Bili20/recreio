@@ -42,10 +42,12 @@ function jogadaVencedora(t: Tabuleiro, marca: Marca): number | null {
   return null
 }
 
-// ---- Minimax (nível difícil): retorna a pontuação ótima para `vez`. ----
+// ---- Minimax com poda alpha-beta (nível difícil): pontuação ótima para `vez`. ----
 // +10 vitória da IA, -10 derrota, 0 empate; desconta a profundidade para preferir
-// vitórias rápidas e derrotas tardias.
-function minimax(t: Tabuleiro, vez: Marca, ia: Marca, prof: number): number {
+// vitórias rápidas e derrotas tardias. A poda não altera o resultado ótimo — só
+// descarta ramos que não podem influenciar a decisão —, mantendo a IA imbatível
+// e tornando a busca muito mais rápida (1ª jogada do tabuleiro vazio quase instantânea).
+function minimax(t: Tabuleiro, vez: Marca, ia: Marca, prof: number, alpha: number, beta: number): number {
   const venc = vencedor(t)
   if (venc) return venc.jogador === ia ? 10 - prof : prof - 10
   if (tabuleiroCheio(t)) return 0
@@ -55,14 +57,18 @@ function minimax(t: Tabuleiro, vez: Marca, ia: Marca, prof: number): number {
     let melhor = -Infinity
     for (const i of movimentos) {
       const copia = [...t]; copia[i] = vez
-      melhor = Math.max(melhor, minimax(copia, oponente(vez), ia, prof + 1))
+      melhor = Math.max(melhor, minimax(copia, oponente(vez), ia, prof + 1, alpha, beta))
+      alpha = Math.max(alpha, melhor)
+      if (beta <= alpha) break // poda: o minimizador já tem opção melhor
     }
     return melhor
   } else {
     let pior = Infinity
     for (const i of movimentos) {
       const copia = [...t]; copia[i] = vez
-      pior = Math.min(pior, minimax(copia, oponente(vez), ia, prof + 1))
+      pior = Math.min(pior, minimax(copia, oponente(vez), ia, prof + 1, alpha, beta))
+      beta = Math.min(beta, pior)
+      if (beta <= alpha) break // poda: o maximizador já tem opção melhor
     }
     return pior
   }
@@ -73,7 +79,7 @@ function melhorJogadaMinimax(t: Tabuleiro, marca: Marca): number {
   let melhorIdx = jogadasValidas(t)[0]
   for (const i of jogadasValidas(t)) {
     const copia = [...t]; copia[i] = marca
-    const score = minimax(copia, oponente(marca), marca, 1)
+    const score = minimax(copia, oponente(marca), marca, 1, -Infinity, Infinity)
     if (score > melhorScore) { melhorScore = score; melhorIdx = i }
   }
   return melhorIdx
