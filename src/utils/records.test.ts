@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { submitRecord, incrementPlays, loadRecords, hasRecord, RECORD_DEFS } from './records'
+import { submitRecord, incrementPlays, loadRecords, hasRecord, RECORD_DEFS, definirRecorde } from './records'
 
 describe('records', () => {
   beforeEach(() => localStorage.clear())
@@ -46,5 +46,12 @@ describe('records', () => {
   it('formata o valor conforme a definição do jogo', () => {
     expect(RECORD_DEFS.velha.format(12)).toBe('12 vitórias seguidas')
     expect(RECORD_DEFS.memoria.format(75)).toBe('1:15')
+  })
+
+  it('definirRecorde grava o valor exato (não usa "maior é melhor")', () => {
+    definirRecorde('forca', 90, 10)
+    const recs = definirRecorde('forca', 80, 11) // menor, mas deve sobrescrever
+    expect(recs.forca?.value).toBe(80)
+    expect(recs.forca?.plays).toBe(11)
   })
 })

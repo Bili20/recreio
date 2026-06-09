@@ -81,3 +81,13 @@ export function incrementPlays(id: GameId): RecordsState {
   writeJSON(KEY, recs)
   return recs
 }
+
+// Define o valor diretamente — para métricas de "valor atual" (ex.: aproveitamento
+// da forca), em que o sistema deve refletir o número corrente e não o máximo.
+export function definirRecorde(id: GameId, value: number, plays?: number): RecordsState {
+  const recs = loadRecords()
+  const prev = recs[id]
+  recs[id] = { value, updatedAt: Date.now(), plays: plays ?? prev?.plays ?? 0 }
+  writeJSON(KEY, recs)
+  return recs
+}

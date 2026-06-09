@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { loadRecords, submitRecord, incrementPlays, type RecordsState } from '../utils/records'
+import { loadRecords, submitRecord, incrementPlays, definirRecorde, type RecordsState } from '../utils/records'
 import type { GameId } from '../games/games'
 
 // Estado reativo dos recordes. Cada submit re-lê do storage e atualiza o estado.
@@ -14,5 +14,9 @@ export function useRecords() {
     setRecords(incrementPlays(id))
   }, [])
 
-  return { records, submit, addPlay }
+  const definir = useCallback((id: GameId, value: number, plays?: number) => {
+    setRecords(definirRecorde(id, value, plays))
+  }, [])
+
+  return { records, submit, addPlay, definir }
 }
