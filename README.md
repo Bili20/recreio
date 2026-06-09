@@ -2,7 +2,7 @@
 
 Portal web de jogos casuais clássicos — **React + Vite + Tailwind CSS v4**. Sem cadastro, sem backend: tudo roda no navegador e os recordes ficam salvos no `localStorage`.
 
-> **Status:** Fase 1 entregue — fundação completa (tema, recordes, hub, placar global) + **Jogo da Velha**. Fase 2 em andamento: **Pedra-Papel-Tesoura** implementado. Os demais jogos (Memória, 2048, Forca, Sudoku) aparecem no hub como *Em breve* e serão implementados na Fase 2, reaproveitando toda esta base.
+> **Status:** Fase 2 em andamento — fundação completa + **Jogo da Velha**, **Pedra-Papel-Tesoura**, **Jogo da Memória** e **2048** implementados. Forca e Sudoku aparecem no hub como *Em breve* e serão implementados em seguida, reaproveitando toda esta base.
 
 ## Como rodar
 
@@ -29,7 +29,8 @@ npm run test     # testes (lógica dos jogos, recordes, storage)
   - *Difícil* — **minimax** completo; é imbatível (o melhor que dá é empatar).
 - **Pedra, Papel, Tesoura** — melhor de cinco (primeiro a 3) contra o computador, com placar e recorde de séries seguidas.
 - **Jogo da Memória** — grade 4×4 ou 6×6, contagem de movimentos, cronômetro e recorde de melhor tempo.
-- _Em breve (Fase 2):_ 2048, Forca, Sudoku.
+- **2048** — junte blocos iguais até 2048; setas no desktop, swipe no celular; recorde de maior pontuação.
+- _Em breve (Fase 2):_ Forca, Sudoku.
 
 ## Recursos
 
