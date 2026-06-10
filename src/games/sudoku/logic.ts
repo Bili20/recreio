@@ -64,7 +64,36 @@ export function gerarSolucao(rng: () => number = Math.random): Grade {
   return g
 }
 
-// Gera puzzle + solução. Remove células aleatórias até atingir as pistas do nível.
+// Conta as soluções de um puzzle por backtracking, cortando ao atingir `limite`.
+// Não muta a grade de entrada. Usado para garantir puzzles de solução única.
+export function contarSolucoes(grid: Grade, limite = 2): number {
+  const g = clonar(grid)
+  let achadas = 0
+  const busca = (): boolean => {
+    for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        if (g[r][c] === 0) {
+          for (let v = 1; v <= 9; v++) {
+            if (posValido(g, r, c, v)) {
+              g[r][c] = v
+              if (busca()) return true // atingiu o limite — corta
+              g[r][c] = 0
+            }
+          }
+          return false
+        }
+      }
+    }
+    achadas++
+    return achadas >= limite
+  }
+  busca()
+  return achadas
+}
+
+// Gera puzzle + solução. Remove células aleatórias até as pistas do nível, mas só
+// quando a remoção preserva a UNICIDADE da solução — sem isso, um número válido de
+// outra solução possível seria injustamente marcado como erro durante o jogo.
 export function gerar(dif: Dificuldade, rng: () => number = Math.random): { puzzle: Grade; solucao: Grade } {
   const solucao = gerarSolucao(rng)
   const puzzle = clonar(solucao)
@@ -74,8 +103,12 @@ export function gerar(dif: Dificuldade, rng: () => number = Math.random): { puzz
     if (remover <= 0) break
     const r = Math.floor(p / 9)
     const c = p % 9
-    if (puzzle[r][c] !== 0) {
-      puzzle[r][c] = 0
+    if (puzzle[r][c] === 0) continue
+    const guardado = puzzle[r][c]
+    puzzle[r][c] = 0
+    if (contarSolucoes(puzzle) > 1) {
+      puzzle[r][c] = guardado // remoção quebraria a unicidade — desfaz
+    } else {
       remover--
     }
   }

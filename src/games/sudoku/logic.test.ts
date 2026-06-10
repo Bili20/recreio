@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { posValido, conflito, resolver, gerarSolucao, gerar, completo, gradeVazia } from './logic'
+import {
+  posValido, conflito, resolver, gerarSolucao, gerar, completo, gradeVazia, contarSolucoes,
+} from './logic'
 
 const semConflitos = (g: number[][]) => {
   for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) {
@@ -35,16 +37,42 @@ describe('posValido / conflito', () => {
   })
 })
 
+describe('contarSolucoes', () => {
+  it('grade completa tem exatamente 1 solução', () => {
+    expect(contarSolucoes(gerarSolucao(() => 0.5))).toBe(1)
+  })
+  it('grade vazia tem múltiplas soluções (corta no limite)', () => {
+    expect(contarSolucoes(gradeVazia())).toBe(2)
+  })
+  it('não muta a grade de entrada', () => {
+    const g = gradeVazia(); g[0][0] = 5
+    contarSolucoes(g)
+    expect(g[0][0]).toBe(5)
+    expect(g.flat().filter((v) => v !== 0).length).toBe(1)
+  })
+})
+
 describe('gerar', () => {
-  it('Fácil tem 40 pistas e o puzzle é subconjunto da solução', () => {
+  it('Fácil: pistas próximas de 40 e puzzle é subconjunto da solução', () => {
     const { puzzle, solucao } = gerar('facil', () => 0.3)
     const pistas = puzzle.flat().filter((v) => v !== 0).length
-    expect(pistas).toBe(40)
+    expect(pistas).toBeGreaterThanOrEqual(40)
+    expect(pistas).toBeLessThanOrEqual(48)
     for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++)
       if (puzzle[r][c] !== 0) expect(puzzle[r][c]).toBe(solucao[r][c])
   })
-  it('Difícil tem 26 pistas', () => {
-    expect(gerar('dificil', () => 0.7).puzzle.flat().filter((v) => v !== 0).length).toBe(26)
+  it('Difícil: menos pistas que o Fácil', () => {
+    const pistas = gerar('dificil', () => 0.7).puzzle.flat().filter((v) => v !== 0).length
+    expect(pistas).toBeGreaterThanOrEqual(26)
+    expect(pistas).toBeLessThanOrEqual(40)
+  })
+  // Regressão do bug: puzzle com múltiplas soluções marcava como "errado" um
+  // número sem nenhum conflito (pertencia a outra solução válida).
+  it('todo puzzle gerado tem solução ÚNICA', () => {
+    for (const dif of ['facil', 'medio', 'dificil'] as const) {
+      const { puzzle } = gerar(dif, () => 0.42)
+      expect(contarSolucoes(puzzle)).toBe(1)
+    }
   })
   it('resolver resolve o puzzle gerado', () => {
     const { puzzle } = gerar('medio', () => 0.2)

@@ -5,7 +5,7 @@ import Chip from '../../components/Chip'
 import Button from '../../components/Button'
 import { useRecords } from '../../hooks/useRecords'
 import { hasRecord, RECORD_DEFS } from '../../utils/records'
-import { gerar, completo, type Grade, type Dificuldade } from './logic'
+import { gerar, type Grade, type Dificuldade } from './logic'
 
 const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 const ROTULO: Record<Dificuldade, string> = { facil: 'Fácil', medio: 'Médio', dificil: 'Difícil' }
@@ -18,12 +18,13 @@ export default function Sudoku() {
   const [grade, setGrade] = useState<Grade>(() => clonar(jogo.puzzle))
   const [sel, setSel] = useState<[number, number] | null>(null)
   const [erros, setErros] = useState(0)
-  const [errada, setErrada] = useState<[number, number] | null>(null)
   const [inicio, setInicio] = useState<number>(() => Date.now())
   const [agora, setAgora] = useState(0)
   const [registrado, setRegistrado] = useState(false)
 
-  const venceu = completo(grade)
+  // Vitória = grade idêntica à solução (números errados ficam visíveis em vermelho
+  // até serem corrigidos, então "completa" não basta).
+  const venceu = grade.every((linha, r) => linha.every((v, c) => v === jogo.solucao[r][c]))
   const fim = venceu || erros >= 3
   const preenchidas = grade.flat().filter((v) => v !== 0).length
   const pct = Math.round((preenchidas / 81) * 100)
@@ -46,22 +47,19 @@ export default function Sudoku() {
   function novoJogo(d: Dificuldade = dif) {
     const j = gerar(d)
     setDif(d); setJogo(j); setGrade(clonar(j.puzzle))
-    setSel(null); setErros(0); setErrada(null)
+    setSel(null); setErros(0)
     setInicio(Date.now()); setAgora(0); setRegistrado(false)
   }
 
+  // Coloca o número na célula selecionada (0 = apagar). Número diferente da solução
+  // ENTRA na grade (em vermelho) e conta erro — o jogador pode apagar ou sobrescrever.
   function digitar(v: number) {
     if (fim || !sel) return
     const [r, c] = sel
     if (jogo.puzzle[r][c] !== 0) return // célula fixa
-    if (v === 0) {
-      setGrade((g) => { const n = clonar(g); n[r][c] = 0; return n }); setErrada(null); return
-    }
-    if (v === jogo.solucao[r][c]) {
-      setGrade((g) => { const n = clonar(g); n[r][c] = v; return n }); setErrada(null)
-    } else {
-      setErros((e) => e + 1); setErrada([r, c])
-    }
+    if (grade[r][c] === v) return // sem mudança (evita contar o mesmo erro 2x)
+    if (v !== 0 && v !== jogo.solucao[r][c]) setErros((e) => e + 1)
+    setGrade((g) => { const n = clonar(g); n[r][c] = v; return n })
   }
 
   useEffect(() => {
@@ -87,9 +85,11 @@ export default function Sudoku() {
     return r === sr || c === sc || (Math.floor(r / 3) === Math.floor(sr / 3) && Math.floor(c / 3) === Math.floor(sc / 3))
   }
 
+  const selFixa = sel !== null && jogo.puzzle[sel[0]][sel[1]] !== 0
   const status = venceu
     ? `Resolvido em ${fmt(agora)}! 🎉`
     : erros >= 3 ? 'Fim de jogo — 3 erros'
+    : selFixa ? 'Célula fixa — escolha uma célula vazia'
     : sel ? 'Selecione um número para a célula destacada'
     : 'Toque numa célula para começar'
   const recorde = hasRecord(records.sudoku) ? RECORD_DEFS.sudoku.format(records.sudoku!.value as number) : '—'
@@ -120,7 +120,8 @@ export default function Sudoku() {
             linha.map((v, c) => {
               const fixo = jogo.puzzle[r][c] !== 0
               const selecionada = sel?.[0] === r && sel?.[1] === c
-              const eErrada = errada?.[0] === r && errada?.[1] === c
+              // Errada = valor do usuário que diverge da solução (fica vermelho até corrigir)
+              const eErrada = !fixo && v !== 0 && v !== jogo.solucao[r][c]
               const cls = [
                 'su-cell',
                 (c === 2 || c === 5) ? 'box-r' : '',
