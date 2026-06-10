@@ -34,6 +34,12 @@ export default function Jogo2048() {
   const fim = !animando && !temMovimento(grade)
   const maiorBloco = Math.max(0, ...grade.flat())
 
+  // Timeout da fase pós-deslize: guardado para cancelar em "Novo jogo"/unmount —
+  // senão o callback (que carrega os blocos da jogada antiga) sobrescreveria o
+  // tabuleiro recém-criado com o estado do jogo anterior.
+  const animTimeout = useRef<number | null>(null)
+  useEffect(() => () => { if (animTimeout.current !== null) clearTimeout(animTimeout.current) }, [])
+
   function aplicar(dir: Direcao) {
     if (animando || fim) return
     const r = moverBlocos(blocos, dir)
@@ -43,7 +49,8 @@ export default function Jogo2048() {
     setPontos((p) => p + r.ganho)
     setJogadas((j) => j + 1)
     // após o deslize: limpa flags, remove os absorvidos e faz surgir um novo bloco
-    window.setTimeout(() => {
+    animTimeout.current = window.setTimeout(() => {
+      animTimeout.current = null
       const limpos = r.blocos
         .filter((b) => !b.removido)
         .map((b) => ({ ...b, novo: false, fundido: false }))
@@ -95,6 +102,7 @@ export default function Jogo2048() {
   }, [fim])
 
   function novoJogo() {
+    if (animTimeout.current !== null) { clearTimeout(animTimeout.current); animTimeout.current = null }
     if (!registrado && pontos > 0) submit('g2048', pontos) // registra jogo abandonado
     setBlocos(blocosDeGrade(gridInicial()))
     setPontos(0)

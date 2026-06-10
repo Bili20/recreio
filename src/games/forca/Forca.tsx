@@ -50,21 +50,21 @@ export default function Forca() {
   const certas = distintas.filter((l) => tentadas.includes(l)).length
 
   // Ao terminar a partida: atualiza contadores e espelha o aproveitamento no recorde (1×).
+  // Efeitos fora do updater do setState (updaters precisam ser puros — StrictMode os roda 2×).
   useEffect(() => {
     if (!fim || registrada) return
     setRegistrada(true)
-    setContadores((c) => {
-      const novo = { vitorias: c.vitorias + (ganhou ? 1 : 0), partidas: c.partidas + 1 }
-      const apro = Math.round((novo.vitorias / novo.partidas) * 100)
-      definir('forca', apro, novo.partidas)
-      return novo
-    })
+    const novo = { vitorias: contadores.vitorias + (ganhou ? 1 : 0), partidas: contadores.partidas + 1 }
+    setContadores(novo)
+    definir('forca', Math.round((novo.vitorias / novo.partidas) * 100), novo.partidas)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fim])
 
   function tentar(letra: string) {
     if (fim || tentadas.includes(letra)) return
-    setTentadas((t) => [...t, letra])
+    // dedupe também dentro do updater: protege contra autorepeat do teclado físico
+    // disparando duas vezes antes do re-render
+    setTentadas((t) => (t.includes(letra) ? t : [...t, letra]))
   }
 
   function pedirDica() {
@@ -127,9 +127,14 @@ export default function Forca() {
       <BoardArea status={status}>
         <Boneco erros={erradas.length} />
         <div className="hm-word" aria-label="Palavra">
-          {palavra.split('').map((l, i) => (
-            <span key={i} className={`hm-slot${tentadas.includes(l) ? '' : ' blank'}`}>{l}</span>
-          ))}
+          {palavra.split('').map((l, i) => {
+            // Letra oculta NÃO vai ao DOM (senão dava para revelar selecionando o texto);
+            // no fim da partida a palavra inteira é revelada.
+            const revelada = tentadas.includes(l) || fim
+            return (
+              <span key={i} className={`hm-slot${revelada ? '' : ' blank'}`}>{revelada ? l : ' '}</span>
+            )
+          })}
         </div>
         <div className="keyboard">
           {ALFABETO.map((l) => {

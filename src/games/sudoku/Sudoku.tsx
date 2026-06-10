@@ -12,7 +12,7 @@ const ROTULO: Record<Dificuldade, string> = { facil: 'Fácil', medio: 'Médio', 
 const clonar = (g: Grade): Grade => g.map((l) => [...l])
 
 export default function Sudoku() {
-  const { records, submit } = useRecords()
+  const { records, submit, addPlay } = useRecords()
   const [dif, setDif] = useState<Dificuldade>('facil')
   const [jogo, setJogo] = useState(() => gerar('facil'))
   const [grade, setGrade] = useState<Grade>(() => clonar(jogo.puzzle))
@@ -35,14 +35,20 @@ export default function Sudoku() {
     return () => clearInterval(id)
   }, [inicio, fim])
 
+  // Fim de jogo registra uma única vez: vitória grava o melhor tempo; derrota
+  // (3 erros) ao menos conta a partida no placar global.
   useEffect(() => {
-    if (!venceu || registrado) return
-    const seg = Math.max(1, Math.round((Date.now() - inicio) / 1000))
-    setAgora(seg)
+    if (!fim || registrado) return
     setRegistrado(true)
-    submit('sudoku', seg)
+    if (venceu) {
+      const seg = Math.max(1, Math.round((Date.now() - inicio) / 1000))
+      setAgora(seg)
+      submit('sudoku', seg)
+    } else {
+      addPlay('sudoku')
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [venceu])
+  }, [fim])
 
   function novoJogo(d: Dificuldade = dif) {
     const j = gerar(d)
@@ -64,9 +70,10 @@ export default function Sudoku() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key >= '1' && e.key <= '9') digitar(Number(e.key))
-      else if (e.key === 'Backspace' || e.key === 'Delete' || e.key === '0') digitar(0)
-      else if (sel) {
+      if (e.key >= '1' && e.key <= '9') { e.preventDefault(); digitar(Number(e.key)) }
+      else if (e.key === 'Backspace' || e.key === 'Delete' || e.key === '0') { e.preventDefault(); digitar(0) }
+      else if (sel && e.key.startsWith('Arrow')) {
+        e.preventDefault() // sem isso, mover a seleção também rola a página
         const [r, c] = sel
         if (e.key === 'ArrowUp' && r > 0) setSel([r - 1, c])
         else if (e.key === 'ArrowDown' && r < 8) setSel([r + 1, c])

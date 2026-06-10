@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Panel, { StatRow, Divider } from '../../components/Panel'
 import BoardArea from '../../components/BoardArea'
 import Button from '../../components/Button'
@@ -26,6 +26,11 @@ export default function Memoria() {
 
   const completo = encontradas.length === pares
 
+  // Timeout do desvirar (par errado): guardado para poder cancelar quando o jogo
+  // reinicia no meio dos 750ms — senão ele "engoliria" a 1ª virada do jogo novo.
+  const desvirarTimeout = useRef<number | null>(null)
+  useEffect(() => () => { if (desvirarTimeout.current !== null) clearTimeout(desvirarTimeout.current) }, [])
+
   // Cronômetro: roda enquanto há início e não completou.
   useEffect(() => {
     if (inicio === null || completo) return
@@ -44,6 +49,7 @@ export default function Memoria() {
   }, [completo])
 
   function novoJogo(g: Grade = grade) {
+    if (desvirarTimeout.current !== null) { clearTimeout(desvirarTimeout.current); desvirarTimeout.current = null }
     const p = (g * g) / 2
     setGrade(g)
     setCartas(criarBaralho(p))
@@ -66,7 +72,10 @@ export default function Memoria() {
         setViradas([])
       } else {
         setBloqueado(true)
-        setTimeout(() => { setViradas([]); setBloqueado(false) }, 750)
+        desvirarTimeout.current = window.setTimeout(() => {
+          desvirarTimeout.current = null
+          setViradas([]); setBloqueado(false)
+        }, 750)
       }
     }
   }
