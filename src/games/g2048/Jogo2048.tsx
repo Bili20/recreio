@@ -3,6 +3,7 @@ import type { TouchEvent as ReactTouchEvent, CSSProperties } from 'react'
 import Panel, { StatRow, Divider } from '../../components/Panel'
 import BoardArea from '../../components/BoardArea'
 import Button from '../../components/Button'
+import ResultadoOverlay from '../../components/ResultadoOverlay'
 import { useRecords } from '../../hooks/useRecords'
 import { hasRecord, RECORD_DEFS } from '../../utils/records'
 import { gridInicial, temMovimento, venceu, type Direcao } from './logic'
@@ -28,6 +29,8 @@ export default function Jogo2048() {
   const [jogadas, setJogadas] = useState(0)
   const [animando, setAnimando] = useState(false)
   const [registrado, setRegistrado] = useState(false)
+  const [bateuRecorde, setBateuRecorde] = useState(false)
+  const [nudge, setNudge] = useState(false) // "tremor" quando a jogada não move nada
 
   const grade = gradeDeBlocos(blocos)
   const ganhou = venceu(grade)
@@ -40,10 +43,20 @@ export default function Jogo2048() {
   const animTimeout = useRef<number | null>(null)
   useEffect(() => () => { if (animTimeout.current !== null) clearTimeout(animTimeout.current) }, [])
 
+  const nudgeTimeout = useRef<number | null>(null)
+  useEffect(() => () => { if (nudgeTimeout.current !== null) clearTimeout(nudgeTimeout.current) }, [])
+
   function aplicar(dir: Direcao) {
     if (animando || fim) return
     const r = moverBlocos(blocos, dir)
-    if (!r.mudou) return
+    if (!r.mudou) {
+      // jogada sem efeito: um tremor curto avisa que nada se moveu
+      setNudge(false)
+      requestAnimationFrame(() => setNudge(true))
+      if (nudgeTimeout.current !== null) clearTimeout(nudgeTimeout.current)
+      nudgeTimeout.current = window.setTimeout(() => { setNudge(false); nudgeTimeout.current = null }, 320)
+      return
+    }
     setAnimando(true)
     setBlocos(r.blocos) // desliza e funde (os removidos deslizam sobre os sobreviventes)
     setPontos((p) => p + r.ganho)
@@ -95,7 +108,7 @@ export default function Jogo2048() {
   // Grava o recorde uma vez por jogo (pontuação monotônica → final = máximo).
   useEffect(() => {
     if (fim && !registrado && pontos > 0) {
-      submit('g2048', pontos)
+      setBateuRecorde(submit('g2048', pontos))
       setRegistrado(true)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -109,6 +122,7 @@ export default function Jogo2048() {
     setJogadas(0)
     setAnimando(false)
     setRegistrado(false)
+    setBateuRecorde(false)
   }
 
   const status = ganhou ? 'Você chegou a 2048! 🎉' : 'Junte blocos iguais para chegar a 2048'
@@ -132,8 +146,8 @@ export default function Jogo2048() {
         </Panel>
       </div>
 
-      <BoardArea status={status}>
-        <div className="g2048" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} role="grid" aria-label="Tabuleiro do 2048">
+      <BoardArea status={status} tom={ganhou ? 'vitoria' : undefined}>
+        <div className={`g2048${nudge ? ' shake' : ''}`} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} role="grid" aria-label="Tabuleiro do 2048">
           {/* casas de fundo (estáticas) */}
           {Array.from({ length: 16 }).map((_, i) => (
             <span key={i} className="g2048-cell" style={{ '--r': Math.floor(i / 4), '--c': i % 4 } as CSSProperties} />
@@ -149,13 +163,14 @@ export default function Jogo2048() {
             </div>
           ))}
           {fim && (
-            <div className="g2048-overlay">
-              <div className="g2048-overlay-card">
-                <strong>Fim de jogo</strong>
-                <span>{pontos.toLocaleString('pt-BR')} pontos</span>
-                <Button variant="primary" onClick={novoJogo}>Novo jogo</Button>
-              </div>
-            </div>
+            <ResultadoOverlay
+              tipo="derrota"
+              titulo="Fim de jogo"
+              detalhe={`${pontos.toLocaleString('pt-BR')} pontos · maior bloco ${maiorBloco}`}
+              novoRecorde={bateuRecorde}
+              acaoLabel="Novo jogo"
+              onAcao={novoJogo}
+            />
           )}
         </div>
       </BoardArea>

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import Panel, { StatRow, Divider } from '../../components/Panel'
 import BoardArea from '../../components/BoardArea'
+import ResultadoOverlay from '../../components/ResultadoOverlay'
 import Chip from '../../components/Chip'
-import Button from '../../components/Button'
 import { useRecords } from '../../hooks/useRecords'
 import { hasRecord, RECORD_DEFS } from '../../utils/records'
 import { gerar, type Grade, type Dificuldade } from './logic'
@@ -21,6 +21,8 @@ export default function Sudoku() {
   const [inicio, setInicio] = useState<number>(() => Date.now())
   const [agora, setAgora] = useState(0)
   const [registrado, setRegistrado] = useState(false)
+  const [bateuRecorde, setBateuRecorde] = useState(false)
+  const [tremor, setTremor] = useState(0) // nonce p/ reanimar o shake da célula errada
 
   // Vitória = grade idêntica à solução (números errados ficam visíveis em vermelho
   // até serem corrigidos, então "completa" não basta).
@@ -43,7 +45,7 @@ export default function Sudoku() {
     if (venceu) {
       const seg = Math.max(1, Math.round((Date.now() - inicio) / 1000))
       setAgora(seg)
-      submit('sudoku', seg)
+      setBateuRecorde(submit('sudoku', seg))
     } else {
       addPlay('sudoku')
     }
@@ -53,8 +55,8 @@ export default function Sudoku() {
   function novoJogo(d: Dificuldade = dif) {
     const j = gerar(d)
     setDif(d); setJogo(j); setGrade(clonar(j.puzzle))
-    setSel(null); setErros(0)
-    setInicio(Date.now()); setAgora(0); setRegistrado(false)
+    setSel(null); setErros(0); setTremor(0)
+    setInicio(Date.now()); setAgora(0); setRegistrado(false); setBateuRecorde(false)
   }
 
   // Coloca o número na célula selecionada (0 = apagar). Número diferente da solução
@@ -64,7 +66,7 @@ export default function Sudoku() {
     const [r, c] = sel
     if (jogo.puzzle[r][c] !== 0) return // célula fixa
     if (grade[r][c] === v) return // sem mudança (evita contar o mesmo erro 2x)
-    if (v !== 0 && v !== jogo.solucao[r][c]) setErros((e) => e + 1)
+    if (v !== 0 && v !== jogo.solucao[r][c]) { setErros((e) => e + 1); setTremor((t) => t + 1) }
     setGrade((g) => { const n = clonar(g); n[r][c] = v; return n })
   }
 
@@ -109,7 +111,7 @@ export default function Sudoku() {
           <Divider />
           <StatRow k="Dificuldade" v={ROTULO[dif]} />
           <StatRow k="Preenchido" v={`${pct}%`} />
-          <StatRow k="Erros" v={`${erros} / 3`} />
+          <StatRow k="Erros" v={<span className={erros === 2 ? 'stat-alerta' : ''}>{erros} / 3</span>} />
           <StatRow k="Recorde" v={recorde} />
         </Panel>
         <Panel title="Níveis">
@@ -121,7 +123,7 @@ export default function Sudoku() {
         </Panel>
       </div>
 
-      <BoardArea status={status}>
+      <BoardArea status={status} tom={venceu ? 'vitoria' : erros >= 3 ? 'derrota' : undefined}>
         <div className="su-board" role="grid" aria-label="Tabuleiro de Sudoku">
           {grade.map((linha, r) =>
             linha.map((v, c) => {
@@ -129,6 +131,8 @@ export default function Sudoku() {
               const selecionada = sel?.[0] === r && sel?.[1] === c
               // Errada = valor do usuário que diverge da solução (fica vermelho até corrigir)
               const eErrada = !fixo && v !== 0 && v !== jogo.solucao[r][c]
+              // shake só na célula selecionada e errada, re-disparado via tremor (no key)
+              const tremeAqui = eErrada && selecionada
               const cls = [
                 'su-cell',
                 (c === 2 || c === 5) ? 'box-r' : '',
@@ -136,9 +140,10 @@ export default function Sudoku() {
                 fixo ? 'fixo' : v !== 0 ? 'user' : '',
                 selecionada ? 'sel' : ehPeer(r, c) ? 'peer' : '',
                 eErrada ? 'erro' : '',
+                tremeAqui ? 'shake' : '',
               ].filter(Boolean).join(' ')
               return (
-                <div key={`${r}-${c}`} className={cls} onClick={() => setSel([r, c])}>
+                <div key={tremeAqui ? `${r}-${c}-${tremor}` : `${r}-${c}`} className={cls} onClick={() => setSel([r, c])}>
                   {v !== 0 ? v : ''}
                 </div>
               )
@@ -151,7 +156,16 @@ export default function Sudoku() {
           ))}
           <button className="su-key" onClick={() => digitar(0)} disabled={fim} aria-label="Apagar">⌫</button>
         </div>
-        {fim && <Button variant="primary" onClick={() => novoJogo()}>Novo jogo</Button>}
+        {fim && (
+          <ResultadoOverlay
+            tipo={venceu ? 'vitoria' : 'derrota'}
+            titulo={venceu ? 'Sudoku resolvido!' : 'Fim de jogo'}
+            detalhe={venceu ? `${ROTULO[dif]} · ${fmt(agora)}` : '3 erros — tente outro tabuleiro'}
+            novoRecorde={bateuRecorde}
+            acaoLabel="Novo jogo"
+            onAcao={() => novoJogo()}
+          />
+        )}
       </BoardArea>
     </div>
   )

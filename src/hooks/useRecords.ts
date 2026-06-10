@@ -6,8 +6,11 @@ import type { GameId } from '../games/games'
 export function useRecords() {
   const [records, setRecords] = useState<RecordsState>(() => loadRecords())
 
-  const submit = useCallback((id: GameId, value: number) => {
-    setRecords(submitRecord(id, value))
+  // Retorna se o resultado bateu o recorde (para o jogo exibir o selo).
+  const submit = useCallback((id: GameId, value: number): boolean => {
+    const { state, novoRecorde } = submitRecord(id, value)
+    setRecords(state)
+    return novoRecorde
   }, [])
 
   const addPlay = useCallback((id: GameId) => {

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import Panel, { StatRow, Divider, PanelActions } from '../../components/Panel'
 import BoardArea from '../../components/BoardArea'
 import Button from '../../components/Button'
+import ResultadoOverlay from '../../components/ResultadoOverlay'
 import Pill from '../../components/Pill'
 import { useRecords } from '../../hooks/useRecords'
 import { hasRecord } from '../../utils/records'
@@ -40,6 +41,8 @@ export default function Forca() {
   const [tentadas, setTentadas] = useState<string[]>([])
   const [dicaUsada, setDicaUsada] = useState(false)
   const [registrada, setRegistrada] = useState(false)
+  const [bateuRecorde, setBateuRecorde] = useState(false)
+  const [tremor, setTremor] = useState(0) // bump a cada erro → reanima o shake do boneco
 
   const { palavra, categoria } = sorteada
   const erradas = letrasErradas(palavra, tentadas)
@@ -54,14 +57,18 @@ export default function Forca() {
   useEffect(() => {
     if (!fim || registrada) return
     setRegistrada(true)
+    const aproAntes = hasRecord(records.forca) ? (records.forca!.value as number) : 0
     const novo = { vitorias: contadores.vitorias + (ganhou ? 1 : 0), partidas: contadores.partidas + 1 }
+    const apro = Math.round((novo.vitorias / novo.partidas) * 100)
     setContadores(novo)
-    definir('forca', Math.round((novo.vitorias / novo.partidas) * 100), novo.partidas)
+    definir('forca', apro, novo.partidas)
+    setBateuRecorde(ganhou && apro > aproAntes) // venceu e melhorou o aproveitamento
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fim])
 
   function tentar(letra: string) {
     if (fim || tentadas.includes(letra)) return
+    if (!palavra.includes(letra)) setTremor((t) => t + 1) // erro → tremor no boneco
     // dedupe também dentro do updater: protege contra autorepeat do teclado físico
     // disparando duas vezes antes do re-render
     setTentadas((t) => (t.includes(letra) ? t : [...t, letra]))
@@ -77,7 +84,7 @@ export default function Forca() {
 
   function novaPalavra() {
     setSorteada(escolherPalavra(CATEGORIAS))
-    setTentadas([]); setDicaUsada(false); setRegistrada(false)
+    setTentadas([]); setDicaUsada(false); setRegistrada(false); setBateuRecorde(false)
   }
 
   // Teclado físico (a–z).
@@ -103,7 +110,10 @@ export default function Forca() {
       <div className="panel-side-left">
         <Panel title="Rodada">
           <StatRow k="Categoria" v={categoria} />
-          <StatRow k="Erros" v={`${erradas.length} / ${MAX_ERROS}`} />
+          <StatRow
+            k="Erros"
+            v={<span className={erradas.length === MAX_ERROS - 1 ? 'stat-alerta' : ''}>{erradas.length} / {MAX_ERROS}</span>}
+          />
           <StatRow k="Letras certas" v={`${certas} / ${distintas.length}`} />
         </Panel>
         <Panel title="Letras erradas">
@@ -124,8 +134,10 @@ export default function Forca() {
         </Panel>
       </div>
 
-      <BoardArea status={status}>
-        <Boneco erros={erradas.length} />
+      <BoardArea status={status} tom={ganhou ? 'vitoria' : perdeuJogo ? 'derrota' : undefined}>
+        <div key={tremor} className={tremor > 0 ? 'shake' : ''}>
+          <Boneco erros={erradas.length} />
+        </div>
         <div className="hm-word" aria-label="Palavra">
           {palavra.split('').map((l, i) => {
             // Letra oculta NÃO vai ao DOM (senão dava para revelar selecionando o texto);
@@ -145,6 +157,17 @@ export default function Forca() {
             )
           })}
         </div>
+
+        {fim && (
+          <ResultadoOverlay
+            tipo={ganhou ? 'vitoria' : 'derrota'}
+            titulo={ganhou ? 'Você acertou!' : 'Não foi dessa vez'}
+            detalhe={ganhou ? `A palavra era ${palavra}` : `A palavra era ${palavra}`}
+            novoRecorde={bateuRecorde}
+            acaoLabel="Nova palavra"
+            onAcao={novaPalavra}
+          />
+        )}
       </BoardArea>
     </div>
   )

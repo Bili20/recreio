@@ -109,6 +109,10 @@ export default function JogoDaVelha() {
 
   const recorde = hasRecord(records.velha) ? (records.velha!.value as number) : '—'
   const linhaWin: number[] = resultado?.linha ?? []
+  // Tom do status: vitória do humano (X) verde; derrota p/ CPU vermelha.
+  const tom = resultado
+    ? resultado.jogador === 'X' ? 'vitoria' as const : modo === 'cpu' ? 'derrota' as const : 'vitoria' as const
+    : undefined
 
   return (
     <div className="game-layout">
@@ -139,7 +143,7 @@ export default function JogoDaVelha() {
       </div>
 
       {/* Tabuleiro central */}
-      <BoardArea status={status}>
+      <BoardArea status={status} tom={tom}>
         <div className="ttt-board" role="grid" aria-label="Tabuleiro do jogo da velha">
           {tab.map((c, i) => (
             <button

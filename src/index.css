@@ -40,6 +40,8 @@
   --border-strong: oklch(0.86 0.006 265);
 
   --accent-fg: #fff;
+  --danger: oklch(0.58 0.2 25);       /* vermelho de erro/derrota */
+  --danger-soft: color-mix(in oklab, var(--danger) 12%, var(--surface));
   /* Mistura em oklab (sem canal de matiz) para o tom acompanhar o acento sem
      o artefato de "hue powerless" do oklch ao misturar com a superfície branca. */
   --accent-soft: color-mix(in oklab, var(--accent) 12%, var(--surface));
@@ -62,6 +64,8 @@
   --border: oklch(0.31 0.012 265);
   --border-strong: oklch(0.38 0.014 265);
 
+  --danger: oklch(0.68 0.19 25);
+  --danger-soft: color-mix(in oklab, var(--danger) 22%, var(--surface));
   --accent-soft: color-mix(in oklab, var(--accent) 24%, var(--surface));
   --accent-tint: color-mix(in oklab, var(--accent) 15%, var(--surface));
 
@@ -237,9 +241,11 @@ a { color: inherit; text-decoration: none; }
 .divider { height: 1px; background: var(--border); margin: 16px 0; border: 0; }
 
 /* ============ Área de tabuleiro ============ */
-.board-area { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: clamp(20px, 3vw, 38px); min-height: 420px; display: flex; flex-direction: column; align-items: center; gap: 20px; box-shadow: var(--shadow-sm); }
+.board-area { position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: clamp(20px, 3vw, 38px); min-height: 420px; display: flex; flex-direction: column; align-items: center; gap: 20px; box-shadow: var(--shadow-sm); }
 .board-status { display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 600; font-size: var(--t-h3); }
-.board-status .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+.board-status .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); transition: background .2s ease, box-shadow .2s ease; }
+.board-status .dot.vitoria { background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+.board-status .dot.derrota { background: var(--danger); box-shadow: 0 0 0 4px var(--danger-soft); }
 
 /* ============ Card de jogo ============ */
 .game-card { display: flex; flex-direction: column; gap: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 22px; box-shadow: var(--shadow-sm); position: relative; transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
@@ -425,16 +431,6 @@ a { color: inherit; text-decoration: none; }
   .tile { transition: none; }
   .tile.novo, .tile.fundido { animation: none; }
 }
-/* Game over explícito sobre o tabuleiro */
-.g2048-overlay {
-  position: absolute; inset: 0; z-index: 5; display: grid; place-items: center;
-  background: color-mix(in oklab, var(--bg) 62%, transparent); backdrop-filter: blur(2px);
-  border-radius: var(--radius-lg); animation: g2048-fade .2s ease;
-}
-.g2048-overlay-card { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
-.g2048-overlay-card strong { font-family: var(--font-display); font-size: var(--t-h2); }
-.g2048-overlay-card span { color: var(--muted); }
-@keyframes g2048-fade { from { opacity: 0; } to { opacity: 1; } }
 
 /* ============ Jogo da Forca ============ */
 .hm-apro { font-family: var(--font-display); font-weight: 700; font-size: var(--t-h1); line-height: 1.1; }
@@ -482,3 +478,39 @@ a { color: inherit; text-decoration: none; }
 }
 .su-key:hover:not(:disabled) { border-color: var(--border-strong); }
 .su-key:disabled { opacity: .5; cursor: default; }
+
+/* ============ Feedback: overlay de resultado, shake e pulso ============ */
+.resultado-overlay {
+  position: absolute; inset: 0; z-index: 10; display: grid; place-items: center;
+  background: color-mix(in oklab, var(--bg) 60%, transparent); backdrop-filter: blur(3px);
+  border-radius: var(--radius-lg); animation: fade-in .22s ease; padding: 16px;
+}
+.resultado-card {
+  display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 28px 32px; box-shadow: var(--shadow-lg); max-width: 320px; animation: pop-in .26s ease;
+}
+.resultado-titulo { font-family: var(--font-display); font-size: var(--t-h2); line-height: 1.15; }
+.resultado-overlay.derrota .resultado-titulo { color: var(--danger); }
+.resultado-detalhe { color: var(--muted); font-size: var(--t-sm); }
+.resultado-badge {
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-xs);
+  padding: 5px 12px; border-radius: var(--radius-pill);
+  background: var(--accent-soft); color: var(--accent-strong); animation: pulse-badge 1.4s ease infinite;
+}
+.resultado-acoes { display: flex; flex-direction: column; gap: 8px; width: 100%; margin-top: 4px; }
+.resultado-acoes .btn { width: 100%; }
+
+/* Pulso no contador de erros quando falta 1 para o limite */
+.stat-alerta { color: var(--danger); animation: pulse-alerta 1s ease infinite; }
+
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pop-in { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes pulse-badge { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+@keyframes pulse-alerta { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-5px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(3px); } }
+.shake { animation: shake .32s ease; }
+
+@media (prefers-reduced-motion: reduce) {
+  .resultado-overlay, .resultado-card, .resultado-badge, .stat-alerta, .shake { animation: none; }
+}

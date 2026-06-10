@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Panel, { StatRow, Divider } from '../../components/Panel'
 import BoardArea from '../../components/BoardArea'
-import Button from '../../components/Button'
+import ResultadoOverlay from '../../components/ResultadoOverlay'
 import Chip from '../../components/Chip'
 import { useRecords } from '../../hooks/useRecords'
 import { hasRecord, RECORD_DEFS } from '../../utils/records'
@@ -23,6 +23,7 @@ export default function Memoria() {
   const [inicio, setInicio] = useState<number | null>(null)
   const [agora, setAgora] = useState(0) // segundos decorridos
   const [registrado, setRegistrado] = useState(false)
+  const [bateuRecorde, setBateuRecorde] = useState(false)
 
   const completo = encontradas.length === pares
 
@@ -44,7 +45,7 @@ export default function Memoria() {
     const seg = Math.max(1, Math.round((Date.now() - inicio) / 1000))
     setAgora(seg)
     setRegistrado(true)
-    submit('memoria', seg)
+    setBateuRecorde(submit('memoria', seg))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [completo])
 
@@ -54,7 +55,7 @@ export default function Memoria() {
     setGrade(g)
     setCartas(criarBaralho(p))
     setViradas([]); setEncontradas([]); setMovimentos(0)
-    setBloqueado(false); setInicio(null); setAgora(0); setRegistrado(false)
+    setBloqueado(false); setInicio(null); setAgora(0); setRegistrado(false); setBateuRecorde(false)
   }
 
   function virar(carta: Carta) {
@@ -112,7 +113,7 @@ export default function Memoria() {
         </Panel>
       </div>
 
-      <BoardArea status={status}>
+      <BoardArea status={status} tom={completo ? 'vitoria' : undefined}>
         <div className="mem-grid" style={{ gridTemplateColumns: `repeat(${grade}, 1fr)` }}>
           {cartas.map((c) => {
             const st = estado(c)
@@ -130,7 +131,16 @@ export default function Memoria() {
             )
           })}
         </div>
-        {completo && <Button variant="primary" onClick={() => novoJogo()}>Novo jogo</Button>}
+        {completo && (
+          <ResultadoOverlay
+            tipo="vitoria"
+            titulo="Memória completa!"
+            detalhe={`${fmt(tempo)} · ${movimentos} movimentos`}
+            novoRecorde={bateuRecorde}
+            acaoLabel="Novo jogo"
+            onAcao={() => novoJogo()}
+          />
+        )}
       </BoardArea>
     </div>
   )

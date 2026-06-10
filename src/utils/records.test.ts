@@ -4,19 +4,20 @@ import { submitRecord, incrementPlays, loadRecords, hasRecord, RECORD_DEFS, defi
 describe('records', () => {
   beforeEach(() => localStorage.clear())
 
-  it('grava o primeiro resultado como recorde', () => {
-    const recs = submitRecord('velha', 3)
-    expect(recs.velha?.value).toBe(3)
-    expect(recs.velha?.updatedAt).toBeTypeOf('number')
+  it('grava o primeiro resultado como recorde e sinaliza novoRecorde', () => {
+    const { state, novoRecorde } = submitRecord('velha', 3)
+    expect(state.velha?.value).toBe(3)
+    expect(state.velha?.updatedAt).toBeTypeOf('number')
+    expect(novoRecorde).toBe(true)
   })
 
   it('grava o recorde mesmo após uma derrota/empate prévia (sentinela sem recorde)', () => {
     incrementPlays('velha') // derrota: registra partida, ainda sem recorde
     expect(hasRecord(loadRecords().velha)).toBe(false)
-    const recs = submitRecord('velha', 2) // primeira vitória
-    expect(recs.velha?.value).toBe(2)
-    expect(recs.velha?.plays).toBe(2)
-    expect(hasRecord(recs.velha)).toBe(true)
+    const { state } = submitRecord('velha', 2) // primeira vitória
+    expect(state.velha?.value).toBe(2)
+    expect(state.velha?.plays).toBe(2)
+    expect(hasRecord(state.velha)).toBe(true)
   })
 
   it('sentinela "sem recorde" sobrevive ao ciclo JSON do localStorage', () => {
@@ -28,15 +29,17 @@ describe('records', () => {
 
   it('só substitui quando o novo resultado é melhor (maior é melhor na velha)', () => {
     submitRecord('velha', 5)
-    const recs = submitRecord('velha', 2)
-    expect(recs.velha?.value).toBe(5) // 2 não supera 5
+    const { state, novoRecorde } = submitRecord('velha', 2)
+    expect(state.velha?.value).toBe(5) // 2 não supera 5
+    expect(novoRecorde).toBe(false)
   })
 
   it('para métrica "menor é melhor", tempo menor vence', () => {
     expect(RECORD_DEFS.memoria.melhor).toBe('menor')
     submitRecord('memoria', 90)
-    const recs = submitRecord('memoria', 40)
-    expect(recs.memoria?.value).toBe(40)
+    const { state, novoRecorde } = submitRecord('memoria', 40)
+    expect(state.memoria?.value).toBe(40)
+    expect(novoRecorde).toBe(true)
   })
 
   it('loadRecords devolve {} quando vazio', () => {

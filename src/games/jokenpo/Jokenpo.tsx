@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import Panel, { StatRow, Divider } from '../../components/Panel'
 import BoardArea from '../../components/BoardArea'
-import Button from '../../components/Button'
+import ResultadoOverlay from '../../components/ResultadoOverlay'
 import { useRecords } from '../../hooks/useRecords'
 import { hasRecord } from '../../utils/records'
 import { IconPedra, IconPapel, IconTesoura } from '../../components/icons'
@@ -26,6 +26,7 @@ export default function Jokenpo() {
   const [streak, setStreak] = useState(0)
   const [revealKey, setRevealKey] = useState(0)
   const [serieRegistrada, setSerieRegistrada] = useState(false)
+  const [bateuRecorde, setBateuRecorde] = useState(false)
 
   const fim = serieEncerrada(placar.voce, placar.cpu)
   const venceuSerie = placar.voce >= ALVO
@@ -37,7 +38,7 @@ export default function Jokenpo() {
     if (venceuSerie) {
       const nova = streak + 1
       setStreak(nova)
-      submit('jokenpo', nova)
+      setBateuRecorde(submit('jokenpo', nova))
     } else {
       setStreak(0)
       addPlay('jokenpo')
@@ -62,7 +63,7 @@ export default function Jokenpo() {
 
   function novaSerie() {
     setPlacar({ voce: 0, cpu: 0 }); setHistorico([])
-    setEscolha(null); setCpu(null); setUltimo(null); setSerieRegistrada(false)
+    setEscolha(null); setCpu(null); setUltimo(null); setSerieRegistrada(false); setBateuRecorde(false)
   }
 
   // Texto de status acima da arena.
@@ -99,7 +100,7 @@ export default function Jokenpo() {
         </Panel>
       </div>
 
-      <BoardArea status={status}>
+      <BoardArea status={status} tom={fim ? (venceuSerie ? 'vitoria' : 'derrota') : undefined}>
         <div className="rps-arena">
           <div className="rps-side">
             <span className="rps-label">Você</span>
@@ -116,22 +117,30 @@ export default function Jokenpo() {
           </div>
         </div>
 
-        {fim ? (
-          <Button variant="primary" onClick={novaSerie}>Nova série</Button>
-        ) : (
-          <div className="rps-choices">
-            {JOGADAS.map((j) => (
-              <button
-                key={j}
-                type="button"
-                className={`rps-choice${escolha === j ? ' active' : ''}`}
-                onClick={() => jogar(j)}
-              >
-                {iconeDe(j)}
-                {ROTULO[j]}
-              </button>
-            ))}
-          </div>
+        <div className="rps-choices">
+          {JOGADAS.map((j) => (
+            <button
+              key={j}
+              type="button"
+              className={`rps-choice${escolha === j ? ' active' : ''}`}
+              onClick={() => jogar(j)}
+              disabled={fim}
+            >
+              {iconeDe(j)}
+              {ROTULO[j]}
+            </button>
+          ))}
+        </div>
+
+        {fim && (
+          <ResultadoOverlay
+            tipo={venceuSerie ? 'vitoria' : 'derrota'}
+            titulo={venceuSerie ? 'Você venceu a série!' : 'A CPU venceu a série'}
+            detalhe={`Placar ${placar.voce} × ${placar.cpu}`}
+            novoRecorde={bateuRecorde}
+            acaoLabel="Nova série"
+            onAcao={novaSerie}
+          />
         )}
       </BoardArea>
     </div>

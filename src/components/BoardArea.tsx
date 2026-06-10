@@ -1,13 +1,19 @@
 import type { ReactNode } from 'react'
 
-export const BoardStatus = ({ children }: { children: ReactNode }) => (
-  <div className="board-status"><span className="dot" aria-hidden />{children}</div>
+export type Tom = 'vitoria' | 'derrota'
+
+export const BoardStatus = ({ tom, children }: { tom?: Tom; children: ReactNode }) => (
+  <div className="board-status">
+    <span className={`dot${tom ? ` ${tom}` : ''}`} aria-hidden />
+    {children}
+  </div>
 )
 
-export default function BoardArea({ status, children }: { status: ReactNode; children: ReactNode }) {
+// `tom` colore o ponto do status conforme o desfecho (vitória / derrota).
+export default function BoardArea({ status, tom, children }: { status: ReactNode; tom?: Tom; children: ReactNode }) {
   return (
     <div className="board-area">
-      <BoardStatus>{status}</BoardStatus>
+      <BoardStatus tom={tom}>{status}</BoardStatus>
       {children}
     </div>
   )

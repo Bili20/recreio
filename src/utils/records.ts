@@ -55,19 +55,21 @@ function isBetter(id: GameId, novo: number, atual: number): boolean {
 }
 
 // Submete um resultado; só substitui o valor se for o primeiro recorde ou se for
-// melhor que o atual. Sempre soma +1 partida.
-export function submitRecord(id: GameId, value: number): RecordsState {
+// melhor que o atual. Sempre soma +1 partida. Retorna o estado e se bateu o recorde
+// (para o jogo exibir o selo "Novo recorde!").
+export function submitRecord(id: GameId, value: number): { state: RecordsState; novoRecorde: boolean } {
   const recs = loadRecords()
   const prev = recs[id]
   const plays = (prev?.plays ?? 0) + 1
   // Sem recorde ainda (entrada nova ou sentinela) → qualquer valor real vira recorde.
-  if (!hasRecord(prev) || isBetter(id, value, prev!.value as number)) {
+  const novoRecorde = !hasRecord(prev) || isBetter(id, value, prev!.value as number)
+  if (novoRecorde) {
     recs[id] = { value, updatedAt: Date.now(), plays }
   } else {
     recs[id] = { ...prev!, plays }
   }
   writeJSON(KEY, recs)
-  return recs
+  return { state: recs, novoRecorde }
 }
 
 // Soma uma partida sem mexer no recorde (ex.: rodada perdida). Usa null como
