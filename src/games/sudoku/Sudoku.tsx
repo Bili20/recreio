@@ -5,7 +5,7 @@ import Chip from '../../components/Chip'
 import Button from '../../components/Button'
 import { useRecords } from '../../hooks/useRecords'
 import { hasRecord, RECORD_DEFS } from '../../utils/records'
-import { gerar, type Grade, type Dificuldade } from './logic'
+import { gerar, conflito, type Grade, type Dificuldade } from './logic'
 
 const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 const ROTULO: Record<Dificuldade, string> = { facil: 'Fácil', medio: 'Médio', dificil: 'Difícil' }
@@ -22,8 +22,8 @@ export default function Sudoku() {
   const [agora, setAgora] = useState(0)
   const [registrado, setRegistrado] = useState(false)
 
-  // Vitória = grade idêntica à solução (números errados ficam visíveis em vermelho
-  // até serem corrigidos, então "completa" não basta).
+  // Vitória = grade idêntica à solução. Como o puzzle tem solução única, isso equivale
+  // a preencher tudo sem nenhum conflito (números em conflito ficam vermelhos até corrigir).
   const venceu = grade.every((linha, r) => linha.every((v, c) => v === jogo.solucao[r][c]))
   const fim = venceu || erros >= 3
   const preenchidas = grade.flat().filter((v) => v !== 0).length
@@ -57,14 +57,16 @@ export default function Sudoku() {
     setInicio(Date.now()); setAgora(0); setRegistrado(false)
   }
 
-  // Coloca o número na célula selecionada (0 = apagar). Número diferente da solução
-  // ENTRA na grade (em vermelho) e conta erro — o jogador pode apagar ou sobrescrever.
+  // Coloca o número na célula selecionada (0 = apagar). O número sempre ENTRA na grade;
+  // se ele repetir um valor que já existe na mesma linha, coluna ou caixa, fica vermelho
+  // e conta um erro. Validamos por CONFLITO (não comparando com a solução escondida),
+  // senão um palpite válido — sem repetição — seria marcado errado injustamente.
   function digitar(v: number) {
     if (fim || !sel) return
     const [r, c] = sel
     if (jogo.puzzle[r][c] !== 0) return // célula fixa
     if (grade[r][c] === v) return // sem mudança (evita contar o mesmo erro 2x)
-    if (v !== 0 && v !== jogo.solucao[r][c]) setErros((e) => e + 1)
+    if (v !== 0 && conflito(grade, r, c, v)) setErros((e) => e + 1)
     setGrade((g) => { const n = clonar(g); n[r][c] = v; return n })
   }
 
@@ -127,8 +129,8 @@ export default function Sudoku() {
             linha.map((v, c) => {
               const fixo = jogo.puzzle[r][c] !== 0
               const selecionada = sel?.[0] === r && sel?.[1] === c
-              // Errada = valor do usuário que diverge da solução (fica vermelho até corrigir)
-              const eErrada = !fixo && v !== 0 && v !== jogo.solucao[r][c]
+              // Conflito = mesmo valor já presente na linha/coluna/caixa (vermelho até corrigir)
+              const eErrada = !fixo && v !== 0 && conflito(grade, r, c, v)
               const cls = [
                 'su-cell',
                 (c === 2 || c === 5) ? 'box-r' : '',

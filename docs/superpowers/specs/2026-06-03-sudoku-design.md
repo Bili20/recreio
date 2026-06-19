@@ -10,7 +10,7 @@
 ## Comportamento
 - Rota `/sudoku`; `ativo: true`.
 - **Geração válida:** solução completa por backtracking aleatorizado; remove células até as pistas do nível — **Fácil 40 · Médio 32 · Difícil 26** pistas.
-- **Validação:** número correto (== solução) é colocado (em `--accent`); número errado conta **erro** (não é colocado); **3 erros = fim de jogo (derrota)**.
+- **Validação:** todo número entra na grade; se ele **repetir** um valor já presente na mesma linha/coluna/caixa (conflito) fica em vermelho (`.erro`) e conta **erro**; **3 erros = fim de jogo (derrota)**. A validação é por conflito (regras do Sudoku), não comparação com a solução escondida — assim um palpite válido (sem repetição) não é marcado como errado.
 - Seleciona célula (não-fixa) → `.sel`; relacionadas (mesma linha/coluna/caixa) → `.peer`.
 - Teclado numérico na tela (1–9 + apagar) e físico (1–9, Backspace, setas para mover seleção).
 - **Preenchido %** = células preenchidas / 81. **Cronômetro** começa ao gerar o tabuleiro, para ao vencer/perder.
@@ -33,6 +33,6 @@
 ## Critérios de aceite
 - Testes e build passam; tsc limpo.
 - Tabuleiros gerados são válidos/solúveis; pistas conforme o nível.
-- Validação: certo entra em `--accent`; errado conta erro; 3 erros → fim; vitória ao completar correto grava melhor tempo (Hub/Placar).
+- Validação: número entra na grade; conflito (repetição na linha/coluna/caixa) fica vermelho e conta erro; 3 erros → fim; vitória ao completar correto grava melhor tempo (Hub/Placar).
 - Seleção/peers/teclado (tela + físico) funcionam. Fiel ao mockup, claro/escuro, 4 acentos, responsivo, pt-BR.
 - Card sai de "Em breve" — **Fase 2 concluída** (todos os 6 jogos ativos).
