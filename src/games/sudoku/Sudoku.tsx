@@ -20,7 +20,6 @@ export default function Sudoku() {
   const [erros, setErros] = useState(0)
   const [inicio, setInicio] = useState<number>(() => Date.now())
   const [agora, setAgora] = useState(0)
-  const [registrado, setRegistrado] = useState(false)
 
   // Vitória = grade idêntica à solução. Como o puzzle tem solução única, isso equivale
   // a preencher tudo sem nenhum conflito (números em conflito ficam vermelhos até corrigir).
@@ -35,26 +34,11 @@ export default function Sudoku() {
     return () => clearInterval(id)
   }, [inicio, fim])
 
-  // Fim de jogo registra uma única vez: vitória grava o melhor tempo; derrota
-  // (3 erros) ao menos conta a partida no placar global.
-  useEffect(() => {
-    if (!fim || registrado) return
-    setRegistrado(true)
-    if (venceu) {
-      const seg = Math.max(1, Math.round((Date.now() - inicio) / 1000))
-      setAgora(seg)
-      submit('sudoku', seg)
-    } else {
-      addPlay('sudoku')
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fim])
-
   function novoJogo(d: Dificuldade = dif) {
     const j = gerar(d)
     setDif(d); setJogo(j); setGrade(clonar(j.puzzle))
     setSel(null); setErros(0)
-    setInicio(Date.now()); setAgora(0); setRegistrado(false)
+    setInicio(Date.now()); setAgora(0)
   }
 
   // Coloca o número na célula selecionada (0 = apagar). O número sempre ENTRA na grade;
@@ -66,8 +50,23 @@ export default function Sudoku() {
     const [r, c] = sel
     if (jogo.puzzle[r][c] !== 0) return // célula fixa
     if (grade[r][c] === v) return // sem mudança (evita contar o mesmo erro 2x)
-    if (v !== 0 && conflito(grade, r, c, v)) setErros((e) => e + 1)
-    setGrade((g) => { const n = clonar(g); n[r][c] = v; return n })
+    const novaGrade = clonar(grade); novaGrade[r][c] = v
+    const novoErros = v !== 0 && conflito(grade, r, c, v) ? erros + 1 : erros
+    setGrade(novaGrade)
+    if (novoErros !== erros) setErros(novoErros)
+
+    // Fim de jogo no ponto que muda a grade (em vez de num efeito): vitória grava o
+    // melhor tempo; derrota (3 erros) ao menos conta a partida no placar global.
+    const venceuAgora = novaGrade.every((linha, rr) => linha.every((vv, cc) => vv === jogo.solucao[rr][cc]))
+    if (venceuAgora || novoErros >= 3) {
+      if (venceuAgora) {
+        const seg = Math.max(1, Math.round((Date.now() - inicio) / 1000))
+        setAgora(seg)
+        submit('sudoku', seg)
+      } else {
+        addPlay('sudoku')
+      }
+    }
   }
 
   useEffect(() => {

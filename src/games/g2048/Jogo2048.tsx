@@ -27,7 +27,7 @@ export default function Jogo2048() {
   const [pontos, setPontos] = useState(0)
   const [jogadas, setJogadas] = useState(0)
   const [animando, setAnimando] = useState(false)
-  const [registrado, setRegistrado] = useState(false)
+  const registrado = useRef(false) // grava o recorde uma vez por jogo (ref evita setState em efeito)
 
   const grade = gradeDeBlocos(blocos)
   const ganhou = venceu(grade)
@@ -94,21 +94,21 @@ export default function Jogo2048() {
 
   // Grava o recorde uma vez por jogo (pontuação monotônica → final = máximo).
   useEffect(() => {
-    if (fim && !registrado && pontos > 0) {
+    if (fim && !registrado.current && pontos > 0) {
       submit('g2048', pontos)
-      setRegistrado(true)
+      registrado.current = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fim])
 
   function novoJogo() {
     if (animTimeout.current !== null) { clearTimeout(animTimeout.current); animTimeout.current = null }
-    if (!registrado && pontos > 0) submit('g2048', pontos) // registra jogo abandonado
+    if (!registrado.current && pontos > 0) submit('g2048', pontos) // registra jogo abandonado
     setBlocos(blocosDeGrade(gridInicial()))
     setPontos(0)
     setJogadas(0)
     setAnimando(false)
-    setRegistrado(false)
+    registrado.current = false
   }
 
   const status = ganhou ? 'Você chegou a 2048! 🎉' : 'Junte blocos iguais para chegar a 2048'

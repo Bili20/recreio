@@ -22,7 +22,6 @@ export default function Memoria() {
   const [bloqueado, setBloqueado] = useState(false)
   const [inicio, setInicio] = useState<number | null>(null)
   const [agora, setAgora] = useState(0) // segundos decorridos
-  const [registrado, setRegistrado] = useState(false)
 
   const completo = encontradas.length === pares
 
@@ -38,28 +37,22 @@ export default function Memoria() {
     return () => clearInterval(id)
   }, [inicio, completo])
 
-  // Ao completar: congela o tempo e grava o recorde (uma vez).
-  useEffect(() => {
-    if (!completo || registrado || inicio === null) return
-    const seg = Math.max(1, Math.round((Date.now() - inicio) / 1000))
-    setAgora(seg)
-    setRegistrado(true)
-    submit('memoria', seg)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [completo])
-
   function novoJogo(g: Grade = grade) {
     if (desvirarTimeout.current !== null) { clearTimeout(desvirarTimeout.current); desvirarTimeout.current = null }
     const p = (g * g) / 2
     setGrade(g)
     setCartas(criarBaralho(p))
     setViradas([]); setEncontradas([]); setMovimentos(0)
-    setBloqueado(false); setInicio(null); setAgora(0); setRegistrado(false)
+    setBloqueado(false); setInicio(null); setAgora(0)
   }
 
   function virar(carta: Carta) {
     if (bloqueado || completo) return
     if (viradas.includes(carta.id) || encontradas.includes(carta.simbolo)) return
+    // Date.now() aqui roda só no clique (handler), não no render — uso legítimo. O
+    // react-hooks/purity não reconhece `virar` como handler (só é usado em onClick,
+    // sem addEventListener como no Sudoku), então marca um falso positivo.
+    // eslint-disable-next-line react-hooks/purity
     if (inicio === null) setInicio(Date.now())
     const novas = [...viradas, carta.id]
     setViradas(novas)
@@ -68,8 +61,16 @@ export default function Memoria() {
       const a = cartas.find((c) => c.id === novas[0])!
       const b = cartas.find((c) => c.id === novas[1])!
       if (a.simbolo === b.simbolo) {
-        setEncontradas((e) => [...e, a.simbolo])
+        const novasEncontradas = [...encontradas, a.simbolo]
+        setEncontradas(novasEncontradas)
         setViradas([])
+        if (novasEncontradas.length === pares) {
+          // Completou nesta jogada: congela o tempo e grava o recorde (uma vez).
+          // eslint-disable-next-line react-hooks/purity -- handler, não render (ver acima)
+          const seg = Math.max(1, Math.round((Date.now() - inicio!) / 1000))
+          setAgora(seg)
+          submit('memoria', seg)
+        }
       } else {
         setBloqueado(true)
         desvirarTimeout.current = window.setTimeout(() => {

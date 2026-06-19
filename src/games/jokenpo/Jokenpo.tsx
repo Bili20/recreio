@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Panel, { StatRow, Divider } from '../../components/Panel'
 import BoardArea from '../../components/BoardArea'
 import Button from '../../components/Button'
@@ -25,44 +25,44 @@ export default function Jokenpo() {
   const [historico, setHistorico] = useState<('vitoria' | 'derrota')[]>([])
   const [streak, setStreak] = useState(0)
   const [revealKey, setRevealKey] = useState(0)
-  const [serieRegistrada, setSerieRegistrada] = useState(false)
 
   const fim = serieEncerrada(placar.voce, placar.cpu)
   const venceuSerie = placar.voce >= ALVO
-
-  // Registra o resultado da série uma única vez (recorde de sequência de séries vencidas).
-  useEffect(() => {
-    if (!fim || serieRegistrada) return
-    setSerieRegistrada(true)
-    if (venceuSerie) {
-      const nova = streak + 1
-      setStreak(nova)
-      submit('jokenpo', nova)
-    } else {
-      setStreak(0)
-      addPlay('jokenpo')
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fim])
 
   function jogar(j: Jogada) {
     if (fim) return
     const c = jogadaCpu()
     const r = resultado(j, c)
     setEscolha(j); setCpu(c); setUltimo(r); setRevealKey((k) => k + 1)
+    let voce = placar.voce
+    let cpuPts = placar.cpu
     if (r === 'vitoria') {
-      setPlacar((p) => ({ ...p, voce: p.voce + 1 }))
+      voce += 1
+      setPlacar({ voce, cpu: cpuPts })
       setHistorico((h) => [...h, 'vitoria'])
     } else if (r === 'derrota') {
-      setPlacar((p) => ({ ...p, cpu: p.cpu + 1 }))
+      cpuPts += 1
+      setPlacar({ voce, cpu: cpuPts })
       setHistorico((h) => [...h, 'derrota'])
     }
     // empate: repete a rodada (não altera placar nem histórico)
+
+    // Série encerrada nesta rodada: registra uma única vez (recorde de séries seguidas).
+    if (serieEncerrada(voce, cpuPts)) {
+      if (voce >= ALVO) {
+        const nova = streak + 1
+        setStreak(nova)
+        submit('jokenpo', nova)
+      } else {
+        setStreak(0)
+        addPlay('jokenpo')
+      }
+    }
   }
 
   function novaSerie() {
     setPlacar({ voce: 0, cpu: 0 }); setHistorico([])
-    setEscolha(null); setCpu(null); setUltimo(null); setSerieRegistrada(false)
+    setEscolha(null); setCpu(null); setUltimo(null)
   }
 
   // Texto de status acima da arena.

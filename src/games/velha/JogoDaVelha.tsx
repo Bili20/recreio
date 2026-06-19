@@ -30,40 +30,27 @@ export default function JogoDaVelha() {
   const [vez, setVez] = useState<Marca>('X') // humano (ou jogador 1) é sempre X
   const [placar, setPlacar] = useState({ voce: 0, cpu: 0, empates: 0 })
   const [streak, setStreak] = useState(0) // sequência de vitórias contra a CPU
-  const [registrado, setRegistrado] = useState(false) // evita contar a rodada 2x
 
   const resultado = vencedor(tab)
   const cheio = tabuleiroCheio(tab)
   const acabou = Boolean(resultado) || cheio
 
   function aplicar(i: number) {
-    setTab((t) => {
-      if (t[i] || vencedor(t)) return t
-      const copia = [...t]; copia[i] = vez
-      return copia
-    })
-    setVez((v) => (v === 'X' ? 'O' : 'X'))
+    if (tab[i] || vencedor(tab)) return
+    const novo = [...tab]; novo[i] = vez
+    setTab(novo)
+    setVez(vez === 'X' ? 'O' : 'X')
+
+    // A jogada encerrou a rodada? Atualiza placar/sequência/recorde uma única vez.
+    // (Tratado aqui, no ponto que muda o tabuleiro, em vez de num efeito.)
+    const res = vencedor(novo)
+    if (res || tabuleiroCheio(novo)) registrarFim(res)
   }
 
-  // Jogada da CPU quando for a vez do O no modo cpu.
-  useEffect(() => {
-    if (modo !== 'cpu' || acabou || vez !== 'O') return
-    const tempo = setTimeout(() => {
-      const i = escolherJogada(tab, 'O', nivel)
-      if (i >= 0) aplicar(i)
-    }, 380)
-    return () => clearTimeout(tempo)
-    // `tab`/`aplicar` omitidos de propósito; `nivel` incluído p/ refletir troca de dificuldade.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vez, modo, acabou, nivel])
-
-  // Ao terminar a rodada: atualiza placar, sequência e recorde (uma vez só).
-  useEffect(() => {
-    if (!acabou || registrado) return
-    setRegistrado(true)
-
-    if (resultado) {
-      const venceuVoce = resultado.jogador === 'X'
+  // Fecha a rodada: soma placar e, no modo CPU, mantém a sequência/recorde.
+  function registrarFim(res: ReturnType<typeof vencedor>) {
+    if (res) {
+      const venceuVoce = res.jogador === 'X'
       setPlacar((p) => ({
         ...p,
         voce: p.voce + (venceuVoce ? 1 : 0),
@@ -83,8 +70,19 @@ export default function JogoDaVelha() {
       setPlacar((p) => ({ ...p, empates: p.empates + 1 }))
       if (modo === 'cpu') { setStreak(0); addPlay('velha') }
     }
+  }
+
+  // Jogada da CPU quando for a vez do O no modo cpu.
+  useEffect(() => {
+    if (modo !== 'cpu' || acabou || vez !== 'O') return
+    const tempo = setTimeout(() => {
+      const i = escolherJogada(tab, 'O', nivel)
+      if (i >= 0) aplicar(i)
+    }, 380)
+    return () => clearTimeout(tempo)
+    // `tab`/`aplicar` omitidos de propósito; `nivel` incluído p/ refletir troca de dificuldade.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [acabou])
+  }, [vez, modo, acabou, nivel])
 
   function jogarHumano(i: number) {
     if (acabou || tab[i]) return
@@ -93,7 +91,7 @@ export default function JogoDaVelha() {
   }
 
   function novaRodada() {
-    setTab(VAZIO); setVez('X'); setRegistrado(false)
+    setTab(VAZIO); setVez('X')
   }
   function reiniciarPlacar() {
     setPlacar({ voce: 0, cpu: 0, empates: 0 }); setStreak(0); novaRodada()

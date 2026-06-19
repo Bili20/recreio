@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Panel, { StatRow, Divider, PanelActions } from '../../components/Panel'
 import BoardArea from '../../components/BoardArea'
 import Button from '../../components/Button'
@@ -39,7 +39,7 @@ export default function Forca() {
   const [sorteada, setSorteada] = useState<PalavraSorteada>(() => escolherPalavra(CATEGORIAS))
   const [tentadas, setTentadas] = useState<string[]>([])
   const [dicaUsada, setDicaUsada] = useState(false)
-  const [registrada, setRegistrada] = useState(false)
+  const registrada = useRef(false) // conta a partida uma vez (ref evita setState em efeito)
 
   const { palavra, categoria } = sorteada
   const erradas = letrasErradas(palavra, tentadas)
@@ -52,8 +52,8 @@ export default function Forca() {
   // Ao terminar a partida: atualiza contadores e espelha o aproveitamento no recorde (1×).
   // Efeitos fora do updater do setState (updaters precisam ser puros — StrictMode os roda 2×).
   useEffect(() => {
-    if (!fim || registrada) return
-    setRegistrada(true)
+    if (!fim || registrada.current) return
+    registrada.current = true
     const novo = { vitorias: contadores.vitorias + (ganhou ? 1 : 0), partidas: contadores.partidas + 1 }
     setContadores(novo)
     definir('forca', Math.round((novo.vitorias / novo.partidas) * 100), novo.partidas)
@@ -77,7 +77,7 @@ export default function Forca() {
 
   function novaPalavra() {
     setSorteada(escolherPalavra(CATEGORIAS))
-    setTentadas([]); setDicaUsada(false); setRegistrada(false)
+    setTentadas([]); setDicaUsada(false); registrada.current = false
   }
 
   // Teclado físico (a–z).
